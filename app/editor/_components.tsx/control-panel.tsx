@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import BackgroundOptions from "./background-options"
 import { ProfileTabContent } from "./profile-tab-content"
 import { CardTextureSelector } from "./texture-selector"
+import BackgroundEffect from "./background-effect"
 import { EditorState } from "@/lib/editor"
 
 
@@ -66,6 +67,10 @@ export default function ControlPanel({ state, onUpdate }: ControlPanelProps) {
           </CardHeader>
           <CardContent>
             <BackgroundOptions state={state} onUpdate={onUpdate} />
+            <BackgroundEffect 
+              state={state.bgEffects} 
+              onUpdate={(updates) => onUpdate({ bgEffects: { ...state.bgEffects, ...updates } })} 
+            />
             <CardTextureSelector state={state} onUpdate={onUpdate} />
           </CardContent>
         </Card>
