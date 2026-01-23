@@ -1,29 +1,16 @@
 
-
-// 2. ProfileEditor Component (Add this to your components folder)
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Camera } from "lucide-react"
+import { EditorState } from "@/lib/editor"
 
-
-interface ControlPanelProps {
-  state: {
-    backgroundType: "wallpaper" | "color" | "gradient"
-    backgroundColor: string
-    backgroundGradient: { from: string; to: string }
-    blurAmount: number
-    padding: number
-    profile: {
-      name: string
-      description: string
-      avatar: string | null
-    }
-  }
-  onUpdate: (updates: Partial<ControlPanelProps["state"]>) => void
+interface ProfileEditorProps {
+  state: EditorState
+  onUpdate: (updates: Partial<EditorState>) => void
 }
 
-export function ProfileEditor({ state, onUpdate }: ControlPanelProps) {
+export function ProfileEditor({ state, onUpdate }: ProfileEditorProps) {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {

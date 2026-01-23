@@ -1,23 +1,13 @@
 import { AlignCenter, AlignRight, LayoutDashboard } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import { EditorState } from "@/lib/editor"
 
-interface ControlPanelProps {
-  state: {
-    backgroundType: "wallpaper" | "color" | "gradient"
-    backgroundColor: string
-    backgroundGradient: { from: string; to: string }
-    blurAmount: number
-    padding: number
-    profile: {
-      name: string
-      description: string
-      avatar: string | null
-    }
-    profileLayout: "center" | "left-stack" | "left-row"
-  }
-  onUpdate: (updates: Partial<ControlPanelProps["state"]>) => void
+interface ProfileLayoutSelectorProps {
+  state: EditorState
+  onUpdate: (updates: Partial<EditorState>) => void
 }
-export function ProfileLayoutSelector({ state, onUpdate }: ControlPanelProps) {
+
+export function ProfileLayoutSelector({ state, onUpdate }: ProfileLayoutSelectorProps) {
   const layouts = [
     { id: "center", icon: AlignCenter, label: "Centered" },
     { id: "left-stack", icon: AlignRight, label: "Left Stack" },

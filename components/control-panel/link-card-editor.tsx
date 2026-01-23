@@ -9,18 +9,12 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2 } from "lucide-react"
 
-interface LinkItem {
-  id: string
-  title: string
-  url: string
-  description?: string
-  imageUrl?: string
-  videoUrl?: string
-  isStripeEnabled?: boolean
-  backgroundColor?: string
-}
+import { EditorState, LinkItem } from "@/lib/editor"
 
-export function LinkCardEditor({ state, onUpdate }: any) {
+export function LinkCardEditor({ state, onUpdate }: { 
+  state: EditorState, 
+  onUpdate: (updates: Partial<EditorState>) => void 
+}) {
   const [isOpen, setIsOpen] = useState(false)
   const [newLink, setNewLink] = useState<Partial<LinkItem>>({
     title: "", url: "", description: "", videoUrl: "", isStripeEnabled: false

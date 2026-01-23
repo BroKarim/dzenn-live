@@ -8,7 +8,12 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-export function SocialMediaEditor({ state, onUpdate }: any) {
+import { EditorState } from "@/lib/editor"
+
+export function SocialMediaEditor({ state, onUpdate }: { 
+  state: EditorState, 
+  onUpdate: (updates: Partial<EditorState>) => void 
+}) {
   const [isOpen, setIsOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [selectedPlatform, setSelectedPlatform] = useState<string>("")

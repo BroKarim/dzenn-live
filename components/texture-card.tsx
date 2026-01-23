@@ -2,7 +2,7 @@
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ExternalLink, PlayCircle, CreditCard } from "lucide-react"
-import { GlassEffect } from "./glass-effect"
+import { GlassEffect } from "./control-panel/glass-effect"
 
 interface LinkItem {
   id: string

@@ -1,12 +1,18 @@
-import {Accordion, AccordionItem, AccordionTrigger, AccordionContent} from "@/components/ui/accordion"; 
-import { ProfileEditor } from "./profile-editor"
-import { SocialMediaEditor } from "./social-editor"
-import { ProfileLayoutSelector } from "./profile-layout-selector"
-import {LinkCardEditor} from "./link-card-editor"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+import { ProfileEditor } from "@/components/control-panel/profile-editor"
+import { SocialMediaEditor } from "@/components/control-panel/social-editor"
+import { ProfileLayoutSelector } from "@/components/control-panel/profile-layout-selector"
+import { LinkCardEditor } from "@/components/control-panel/link-card-editor"
+import { EditorState } from "@/lib/editor"
 
-export function ProfileTabContent({ state, onUpdate }: any) {
+interface ProfileTabProps {
+  state: EditorState
+  onUpdate: (updates: Partial<EditorState>) => void
+}
+
+export function ProfileTab({ state, onUpdate }: ProfileTabProps) {
   return (
-    <Accordion   className="w-full space-y-4 border-none">
+    <Accordion  className="w-full space-y-4 border-none">
       <AccordionItem value="profile-info" className="border rounded-xl bg-card px-4">
         <AccordionTrigger className="hover:no-underline font-semibold">
           Profile Information
@@ -25,7 +31,7 @@ export function ProfileTabContent({ state, onUpdate }: any) {
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="social-links" className=" bg-card px-4">
+      <AccordionItem value="social-links" className="border rounded-xl bg-card px-4">
         <AccordionTrigger className="hover:no-underline font-semibold">
           Social Links
         </AccordionTrigger>
@@ -33,7 +39,8 @@ export function ProfileTabContent({ state, onUpdate }: any) {
           <SocialMediaEditor state={state} onUpdate={onUpdate} />
         </AccordionContent>
       </AccordionItem>
-      <AccordionItem value="social-links" className=" bg-card px-4">
+      
+      <AccordionItem value="add-links" className="border rounded-xl bg-card px-4">
         <AccordionTrigger className="hover:no-underline font-semibold">
           Add Link
         </AccordionTrigger>

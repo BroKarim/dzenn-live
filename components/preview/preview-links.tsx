@@ -1,5 +1,5 @@
 import React from "react"
-import { TexturedCard } from "@/app/editor/_components.tsx/texture-card"
+import { TexturedCard } from "@/components/texture-card"
 import { EditorState, LinkItem } from "@/lib/editor"
 
 interface PreviewLinksProps {
