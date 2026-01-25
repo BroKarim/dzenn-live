@@ -17,11 +17,11 @@ export function PreviewLinks({ profile }: PreviewLinksProps) {
             key={link.id}
             title={link.title.toUpperCase()}
             url={link.url}
-            description={link.description}
-            imageUrl={link.imageUrl}
-            videoUrl={link.videoUrl}
+            description={link.description ?? undefined}
+            imageUrl={link.imageUrl ?? undefined}
+            videoUrl={link.videoUrl ?? undefined}
             isStripeEnabled={link.isStripeEnabled}
-            backgroundColor={link.backgroundColor || "bg-amber-500"}
+            backgroundColor="bg-amber-500"
             titleColor="text-white"
             texture={cardTexture}
           />

@@ -1,4 +1,3 @@
-
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
 
 interface PreviewBackgroundProps {
@@ -6,6 +5,7 @@ interface PreviewBackgroundProps {
 }
 
 export function PreviewBackground({ profile }: PreviewBackgroundProps) {
+  const bgEffects = profile.bgEffects as any;
   const getBackgroundStyle = () => {
     switch (profile.bgType) {
       case "gradient":
@@ -34,19 +34,19 @@ export function PreviewBackground({ profile }: PreviewBackgroundProps) {
         style={{
           ...getBackgroundStyle(),
           filter: `
-            blur(${profile.bgEffects.blur}px) 
-            brightness(${profile.bgEffects.brightness}%) 
-            saturate(${profile.bgEffects.saturation}%) 
-            contrast(${profile.bgEffects.contrast}%)
+            blur(${bgEffects?.blur ?? 0}px) 
+            brightness(${bgEffects?.brightness ?? 100}%) 
+            saturate(${bgEffects?.saturation ?? 100}%) 
+            contrast(${bgEffects?.contrast ?? 100}%)
           `,
-          transform: profile.bgEffects.blur > 0 ? "scale(1.1)" : "scale(1)",
+          transform: (bgEffects?.blur ?? 0) > 0 ? "scale(1.1)" : "scale(1)",
         }}
       />
 
       <div
         className="absolute inset-0 pointer-events-none mix-blend-overlay"
         style={{
-          opacity: profile.bgEffects.noise / 100,
+          opacity: (bgEffects?.noise ?? 0) / 100,
           backgroundImage: `url('https://grainy-gradients.vercel.app/noise.svg')`,
           filter: "contrast(150%) brightness(100%)",
         }}

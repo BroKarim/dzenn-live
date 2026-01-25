@@ -9,7 +9,7 @@ export function PreviewProfile({ profile }: PreviewProfileProps) {
   return (
     <div
       className={`mb-8 flex w-full gap-4 transition-all duration-300 ${
-        profile.layout === "center" ? "flex-col items-center text-center" : profile.layout === "left-stack" ? "flex-col items-start text-left" : "items-center justify-between text-left"
+        profile.layout === "center" ? "flex-col items-center text-center" : profile.layout === "left_stack" ? "flex-col items-start text-left" : "items-center justify-between text-left"
       }`}
     >
       <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-4 border-white/20 bg-zinc-200 shadow-xl">

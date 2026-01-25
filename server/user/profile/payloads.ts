@@ -1,7 +1,5 @@
-// server/user/profile/payloads.ts
 import type { Prisma } from "@/lib/generated/prisma/client";
 
-// Payload untuk dashboard editor (full access)
 export const profileEditorPayload = {
   id: true,
   userId: true,
@@ -48,7 +46,6 @@ export const profileEditorPayload = {
   },
 } satisfies Prisma.ProfileSelect;
 
-// Payload untuk public view (tanpa sensitive data)
 export const profilePublicPayload = {
   slug: true,
   displayName: true,
