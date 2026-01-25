@@ -18,7 +18,7 @@ export default function EditorClient({ initialData }: EditorClientProps) {
 
       <div className="flex flex-1 gap-6 overflow-hidden p-6">
         <Preview state={state} />
-        <ControlPanel state={state} onUpdate={updateState} />
+        <ControlPanel state={state} onUpdate={updateState} profileId={initialData?.id} links={initialData?.links || []} />
       </div>
     </main>
   );
