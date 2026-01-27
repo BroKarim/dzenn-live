@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Link as LinkIcon, CreditCard, Image as ImageIcon, Loader2 } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogClose } from "@/components/ui/alert-dialog";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
-import { createLink, deleteLink } from "@/server/user/links/actions";
+import { createLink, deleteLink, uploadMedia } from "@/server/user/links/actions";
 import { toast } from "sonner";
 
 interface LinkCardEditorProps {
@@ -39,37 +39,75 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const result = reader.result as string;
-        setLogoPreview(result);
+    if (!file) return;
 
-        // For now, store base64 directly. Later will upload to S3
-        setNewLink({ ...newLink, icon: result });
-      };
-      reader.readAsDataURL(file);
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/x-icon", "image/vnd.microsoft.icon", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Please upload JPG, PNG, WebP, ICO or SVG.");
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const result = reader.result as string;
+      setLogoPreview(result);
+
+      try {
+        const uploadResult = await uploadMedia(result, file.name, "icon");
+
+        if (uploadResult.success && uploadResult.url) {
+          setNewLink({ ...newLink, icon: uploadResult.url });
+          toast.success("Icon uploaded!");
+        } else {
+          toast.error("Failed to upload icon");
+          setLogoPreview(null);
+        }
+      } catch (error) {
+        toast.error("Error uploading icon");
+        setLogoPreview(null);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const isVideo = file.type.startsWith("video/");
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setMediaPreview(result);
-        setNewLink({
-          ...newLink,
-          mediaUrl: result,
-          mediaType: isVideo ? "video" : "image",
-          paymentProvider: null,
-          paymentAccountId: null,
-        });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Please upload JPG, PNG or WebP.");
+      return;
     }
+
+    const isVideo = file.type.startsWith("video/");
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const result = reader.result as string;
+      setMediaPreview(result);
+
+      try {
+        const uploadResult = await uploadMedia(result, file.name, "media");
+
+        if (uploadResult.success && uploadResult.url) {
+          setNewLink({
+            ...newLink,
+            mediaUrl: uploadResult.url,
+            mediaType: isVideo ? "video" : "image",
+            paymentProvider: null,
+            paymentAccountId: null,
+          });
+          toast.success("Media uploaded!");
+        } else {
+          toast.error("Failed to upload media");
+          setMediaPreview(null);
+        }
+      } catch (error) {
+        toast.error("Error uploading media");
+        setMediaPreview(null);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handlePaymentSelect = (provider: "stripe" | "lemonsqueezy") => {
@@ -86,30 +124,31 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
   };
 
   const handleAdd = async () => {
-    if (!newLink.title) {
-      toast.error("Title is required");
-      return;
-    }
+    const payload = {
+      title: newLink.title,
+      url: newLink.url.trim(),
+      description: newLink.description || null,
+      icon: newLink.icon || null,
+      mediaUrl: newLink.mediaUrl || null,
+      mediaType: newLink.mediaType || null,
+      paymentProvider: newLink.paymentProvider || null,
+      paymentAccountId: newLink.paymentAccountId || null,
+      position: profile.links.length,
+      isActive: true,
+    };
 
-    if (!newLink.url) {
-      toast.error("URL is required");
+    const { LinkSchema } = await import("@/server/user/links/schema");
+    const validation = LinkSchema.safeParse(payload);
+
+    if (!validation.success) {
+      const firstError = validation.error.issues[0];
+      toast.error(firstError.message);
       return;
     }
 
     setIsSaving(true);
     try {
-      const result = await createLink({
-        title: newLink.title,
-        url: newLink.url,
-        description: newLink.description || null,
-        icon: newLink.icon || null,
-        mediaUrl: newLink.mediaUrl || null,
-        mediaType: newLink.mediaType || null,
-        paymentProvider: newLink.paymentProvider || null,
-        paymentAccountId: newLink.paymentAccountId || null,
-        position: profile.links.length,
-        isActive: true,
-      });
+      const result = await createLink(payload);
 
       if (result.success && result.data) {
         onUpdate({ ...profile, links: [...profile.links, result.data as any] });

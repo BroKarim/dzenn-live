@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { SocialLinkSchema, LinkSchema, SocialLinkInput, LinkInput } from "./schema";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { uploadToS3 } from "@/lib/s3";
+import { optimizeImage } from "@/lib/media";
 
 // ============= SOCIAL LINKS =============
 
@@ -183,5 +185,69 @@ export async function deleteLink(id: string) {
   } catch (error) {
     console.error("Failed to delete link:", error);
     return { success: false, error: "Failed to delete link" };
+  }
+}
+
+// ============= UPLOADS =============
+
+export async function uploadLinkIcon(base64: string, fileName: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const { uploadBase64ToS3 } = await import("@/lib/s3");
+    const url = await uploadBase64ToS3(base64, fileName);
+
+    return { success: true, url };
+  } catch (error) {
+    console.error("Failed to upload icon:", error);
+    return { success: false, error: "Failed to upload icon" };
+  }
+}
+
+export async function uploadLinkMedia(base64: string, fileName: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const { uploadBase64ToS3 } = await import("@/lib/s3");
+    const url = await uploadBase64ToS3(base64, fileName);
+
+    return { success: true, url };
+  } catch (error) {
+    console.error("Failed to upload media:", error);
+    return { success: false, error: "Failed to upload media" };
+  }
+}
+
+export async function uploadMedia(base64: string, fileName: string, type: "icon" | "media") {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { success: false, error: "Unauthorized" };
+
+    // 1. Optimize
+    const optimizedBuffer = await optimizeImage(base64, type);
+
+    // 2. Format FileName agar unik dan ekstensi jadi .webp
+    const cleanName = `${Date.now()}-${fileName.split(".")[0]}.webp`;
+    const folder = type === "icon" ? "icons" : "media";
+
+    // 3. Upload ke S3 (Gunakan buffer, bukan base64 string lagi untuk efisiensi)
+    const url = await uploadToS3(optimizedBuffer, `${folder}/${cleanName}`, "image/webp");
+
+    return { success: true, url };
+  } catch (error: any) {
+    console.error("Upload error:", error);
+    return { success: false, error: error.message || "Processing failed" };
   }
 }
