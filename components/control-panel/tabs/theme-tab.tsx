@@ -39,15 +39,8 @@ export function ThemeTab({ profile, onUpdate }: ThemeTabProps) {
   };
 
   return (
-    <Card className="bg-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Palette className="h-4 w-4" />
-          Background
-        </CardTitle>
-        <CardDescription>Customize the editor background</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-2 px-3 pb-4">
+      <div className="space-y-6">
         <BackgroundOptions profile={profile} onUpdate={onUpdate} />
         <BackgroundEffect profile={profile} onUpdate={onUpdate} />
         <CardTextureSelector profile={profile} onUpdate={onUpdate} />
@@ -56,7 +49,7 @@ export function ThemeTab({ profile, onUpdate }: ThemeTabProps) {
           {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Save Theme Changes
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

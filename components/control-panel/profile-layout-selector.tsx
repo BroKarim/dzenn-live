@@ -49,7 +49,7 @@ export function ProfileLayoutSelector({ profile, onUpdate }: ProfileLayoutSelect
       } finally {
         setIsSaving(false);
       }
-    }, 3000); // Tunggu 3 detik
+    }, 3000);
 
     return () => {
       if (saveTimeoutRef.current) {
@@ -64,9 +64,8 @@ export function ProfileLayoutSelector({ profile, onUpdate }: ProfileLayoutSelect
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Profile Layout</Label>
         {isSaving && (
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -83,7 +82,9 @@ export function ProfileLayoutSelector({ profile, onUpdate }: ProfileLayoutSelect
               key={layout.id}
               onClick={() => handleLayoutChange(layout.id)}
               className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-3 transition-all ${
-                localLayout === layout.id ? "border-primary bg-primary/5 text-primary" : "border-muted bg-transparent text-muted-foreground hover:border-border hover:text-foreground"
+                localLayout === layout.id
+                  ? "shadow-[0px_32px_64px_-16px_#0000004c,0px_16px_32px_-8px_#0000004c,0px_8px_16px_-4px_#0000003d,0px_4px_8px_-2px_#0000003d,0px_-8px_16px_-1px_#00000029,0px_2px_4px_-1px_#0000003d,0px_0px_0px_1px_#000000,inset_0px_0px_0px_1px_#ffffff14,inset_0px_1px_0px_#ffffff33] border-none bg-primary/5 text-primary"
+                  : "border-muted bg-transparent text-muted-foreground hover:border-border hover:text-foreground"
               }`}
             >
               <Icon className="h-5 w-5" />
