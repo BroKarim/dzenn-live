@@ -2,9 +2,11 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Upload } from "lucide-react";
+import { Upload, Image as ImageIcon, Palette, Rainbow } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
+import { BACKGROUND_COLORS } from "@/lib/background-colors";
 
 const WALLPAPER_PRESETS = [
   "https://images.unsplash.com/photo-1765498069280-b863094c17bf?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -34,27 +36,50 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
 
   return (
     <Tabs value={profile.bgType} onValueChange={(v) => onUpdate({ ...profile, bgType: v as any })}>
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="color">Color</TabsTrigger>
-        <TabsTrigger value="gradient">Grad</TabsTrigger>
-        <TabsTrigger value="wallpaper">Wall</TabsTrigger>
-        <TabsTrigger value="image">Img</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-4 h-auto bg-transparent  p-1 gap-1">
+        <TabsTrigger value="color" className="p-0 h-full w-full">
+          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/20">
+            <Palette className="h-6 w-6 text-muted-foreground" />
+          </div>
+        </TabsTrigger>
+        <TabsTrigger value="gradient" className="p-0 h-full w-full">
+          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/20">
+            <Rainbow className="h-6 w-6 text-muted-foreground" />
+          </div>
+        </TabsTrigger>
+        <TabsTrigger value="wallpaper" className="p-0 h-full w-full">
+          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/20">
+            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+          </div>
+        </TabsTrigger>
+        <TabsTrigger value="image" className="p-0 h-full w-full">
+          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/20">
+            <Upload className="h-6 w-6 text-muted-foreground" />
+          </div>
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="color" className="space-y-4 pt-4">
-        <div className="grid grid-cols-3 gap-2">
-          {["#1a1a1a", "#2d2d2d", "#3f3f3f", "#4f4f4f", "#1e293b", "#334155"].map((color) => (
+        <div className="flex flex-wrap gap-1 justify-between">
+          {BACKGROUND_COLORS.map((color) => (
             <button
               key={color}
               onClick={() => onUpdate({ ...profile, bgColor: color })}
-              className={`h-10 rounded-lg border-2 transition-all ${profile.bgColor === color ? "border-primary" : "border-transparent"}`}
+              className={`relative aspect-square h-10 w-10 rounded-full transition-all duration-200 ${
+                profile.bgColor === color ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110 z-10" : "hover:scale-110 active:scale-95 border border-black/5"
+              }`}
               style={{ backgroundColor: color }}
-            />
+            >
+              {profile.bgColor === color && <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-pulse" />}
+            </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <Input type="color" value={profile.bgColor || "#000000"} onChange={(e) => onUpdate({ ...profile, bgColor: e.target.value })} className="h-8 w-12 cursor-pointer" />
-          <span className="text-xs text-muted-foreground">Custom Color</span>
+
+        <div className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
+          <div className="relative h-8 w-12 overflow-hidden rounded-md border shadow-sm">
+            <Input type="color" value={profile.bgColor || "#000000"} onChange={(e) => onUpdate({ ...profile, bgColor: e.target.value })} className="absolute -inset-2 h-12 w-16 cursor-pointer" />
+          </div>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Custom Color</span>
         </div>
       </TabsContent>
 
