@@ -129,19 +129,18 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
                 }`}
                 title={preset.name}
               >
-                <img src={preset.url} className="h-full w-full object-cover" alt={preset.name} />
+                <Image src={preset.url} fill className="object-cover" alt={preset.name} sizes="(max-width: 768px) 33vw, 100px" />
                 {profile.bgWallpaper === preset.url && <div className="absolute inset-0 bg-primary/10 border-2 border-primary/30" />}
               </button>
             ))}
           </div>
         )}
       </TabsContent>
-
       <TabsContent value="image" className="space-y-4 pt-4">
         <div className="flex flex-col gap-4">
           <div className="relative group flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-muted transition-colors hover:border-primary/50">
             {profile.bgImage ? (
-              <img src={profile.bgImage} className="h-full w-full rounded-lg object-cover" alt="upload" />
+              <Image src={profile.bgImage} fill className="rounded-lg object-cover" alt="upload" />
             ) : (
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <Upload className="h-6 w-6" />

@@ -15,7 +15,11 @@ export async function getBackgroundPresets(): Promise<BackgroundPreset[]> {
       },
     });
 
-    return presets;
+    const CLOUDFRONT_URL = "https://d1uuiykksp6inc.cloudfront.net/wallappers";
+    return presets.map((preset) => ({
+      ...preset,
+      url: `${CLOUDFRONT_URL}/${preset.url.split("/").pop()}`,
+    }));
   } catch (error) {
     console.error("Failed to fetch background presets:", error);
     return [];
@@ -36,7 +40,11 @@ export async function getBackgroundPresetsByCategory(category: string): Promise<
       },
     });
 
-    return presets;
+    const CLOUDFRONT_URL = "https://d1uuiykksp6inc.cloudfront.net/wallappers";
+    return presets.map((preset) => ({
+      ...preset,
+      url: `${CLOUDFRONT_URL}/${preset.url.split("/").pop()}`,
+    }));
   } catch (error) {
     console.error("Failed to fetch background presets by category:", error);
     return [];

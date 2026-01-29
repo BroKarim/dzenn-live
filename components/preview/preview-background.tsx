@@ -10,12 +10,15 @@ export function PreviewBackground({ profile }: PreviewBackgroundProps) {
     switch (profile.bgType) {
       case "gradient":
         return { background: `linear-gradient(135deg, ${profile.bgGradientFrom} 0%, ${profile.bgGradientTo} 100%)` };
-      case "wallpaper":
+      case "wallpaper": {
+        const fileName = profile.bgWallpaper?.split("/").pop();
+        const wallappersUrl = fileName ? `https://d1uuiykksp6inc.cloudfront.net/wallappers/${fileName}` : profile.bgWallpaper;
         return {
-          backgroundImage: `url(${profile.bgWallpaper})`,
+          backgroundImage: `url(${wallappersUrl})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         };
+      }
       case "image":
         return {
           backgroundImage: `url(${profile.bgImage})`,
