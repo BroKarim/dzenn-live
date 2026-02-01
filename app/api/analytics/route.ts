@@ -29,26 +29,15 @@ export async function GET(req: Request) {
       });
 
       if (!link) {
-        return NextResponse.json(
-          { error: "Link not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Link not found" }, { status: 404 });
       }
 
-      const stats = await analyticsService.getLinkStats(
-        linkId,
-        startDate ? new Date(startDate) : undefined,
-        endDate ? new Date(endDate) : undefined
-      );
+      const stats = await analyticsService.getLinkStats(linkId, startDate ? new Date(startDate) : undefined, endDate ? new Date(endDate) : undefined);
 
       return NextResponse.json(stats);
     }
 
-    const stats = await analyticsService.getProfileStats(
-      profile.id,
-      startDate ? new Date(startDate) : undefined,
-      endDate ? new Date(endDate) : undefined
-    );
+    const stats = await analyticsService.getProfileStats(profile.id, startDate ? new Date(startDate) : undefined, endDate ? new Date(endDate) : undefined);
 
     return NextResponse.json(stats);
   } catch (error) {
@@ -56,10 +45,6 @@ export async function GET(req: Request) {
       throw error;
     }
     console.error("Error fetching analytics:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch analytics" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch analytics" }, { status: 500 });
   }
 }
-

@@ -24,14 +24,7 @@ export async function GET() {
 
     return NextResponse.json({ counts });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     console.error("Error fetching link counts:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch link counts" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch link counts" }, { status: 500 });
   }
 }
-

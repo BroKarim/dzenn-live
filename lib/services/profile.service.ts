@@ -96,10 +96,10 @@ export const profileService = {
         username: true,
         image: true,
         profile: {
-        select: {
-          avatarUrl: true, // Field yang baru dipindah ke Profile
-        }
-      }
+          select: {
+            avatarUrl: true, // Field yang baru dipindah ke Profile
+          },
+        },
       },
       ...(limit ? { take: limit } : {}),
       ...(offset ? { skip: offset } : {}),
@@ -120,4 +120,3 @@ export const profileService = {
     });
   },
 };
-

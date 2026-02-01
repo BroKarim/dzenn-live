@@ -20,9 +20,25 @@ export const profileEditorPayload = {
   bgEffects: true,
   user: { select: { username: true } },
   socials: { select: { id: true, platform: true, url: true }, orderBy: { position: "asc" } },
-  links: { select: { id: true, title: true, url: true, isActive: true }, orderBy: { position: "asc" } },
+  links: {
+    select: {
+      id: true,
+      title: true,
+      url: true,
+      isActive: true,
+      icon: true,
+      description: true,
+      mediaUrl: true,
+      mediaType: true,
+      paymentProvider: true,
+      paymentAccountId: true,
+      position: true,
+      buttonColor: true,
+      buttonTextColor: true,
+    },
+    orderBy: { position: "asc" },
+  },
 } satisfies Prisma.ProfileSelect;
-
 
 export const profilePublicPayload = {
   slug: true,

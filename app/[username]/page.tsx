@@ -8,9 +8,9 @@ import { getAvatarUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ProfileHeaderButtons } from "./profile-header-buttons";
-import { CalBookingButton } from "@/components/cal-booking-button";
 import { TrackedIconLinksList } from "@/components/tracked-icon-links-list";
 import { TrackedMainLinksList } from "@/components/tracked-main-links-list";
+import { Suspense } from "react";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -99,8 +99,7 @@ function parseBioWithCode(bio: string) {
   return parts.length > 0 ? parts : [bio];
 }
 
-export default async function PublicProfilePage({ params }: Props) {
-  const { username } = await params;
+async function ProfileContent({ username }: { username: string }) {
   const user = await profileService.getByUsername(username);
 
   if (!user || !user.profile?.isPublished) {
@@ -187,5 +186,15 @@ export default async function PublicProfilePage({ params }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default async function PublicProfilePage({ params }: Props) {
+  const { username } = await params;
+
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <ProfileContent username={username} />
+    </Suspense>
   );
 }
