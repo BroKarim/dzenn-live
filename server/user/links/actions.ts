@@ -219,6 +219,36 @@ export async function deleteLink(id: string) {
   }
 }
 
+export async function reorderLinks(linkIds: string[]) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Update positions for each link
+    await db.$transaction(
+      linkIds.map((id, index) =>
+        db.link.update({
+          where: { id },
+          data: { position: index },
+        }),
+      ),
+    );
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/${session.user.username}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to reorder links:", error);
+    return { success: false, error: "Failed to reorder links" };
+  }
+}
+
 // ============= UPLOADS =============
 
 export async function uploadLinkIcon(base64: string, fileName: string) {

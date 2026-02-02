@@ -7,10 +7,13 @@ import { Plus, Trash2, Link as LinkIcon, CreditCard, Image as ImageIcon, Loader2
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
-import { createLink, deleteLink, uploadMedia } from "@/server/user/links/actions";
+import { createLink, deleteLink, uploadMedia, reorderLinks } from "@/server/user/links/actions";
 import { LinkEditDialog } from "./link-edit-dialog";
 import { toast } from "sonner";
 import { Button2 } from "@/components/ui/button-2";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface LinkCardEditorProps {
   profile: ProfileEditorData;
@@ -209,6 +212,54 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     });
   };
 
+  const [isReordering, setIsReordering] = useState(false);
+  const reorderTimeoutRef = React.useRef<NodeJS.Timeout>(null);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = profile.links.findIndex((l) => l.id === active.id);
+    const newIndex = profile.links.findIndex((l) => l.id === over.id);
+
+    // 1. Optimistic Update: Langsung update state lokal agar UI snap instant
+    const newLinks = arrayMove(profile.links, oldIndex, newIndex).map((link, index) => ({
+      ...link,
+      position: index, // Update position di local state juga
+    }));
+
+    onUpdate({ ...profile, links: newLinks });
+    setIsReordering(true);
+
+    // 2. Debouncing: Clear timeout sebelumnya jika user nge-drag lagi dgn cepat
+    if (reorderTimeoutRef.current) {
+      clearTimeout(reorderTimeoutRef.current);
+    }
+
+    // 3. Set timeout baru untuk kirim ke server (tunggu 1 detik setelah berhenti drag)
+    reorderTimeoutRef.current = setTimeout(async () => {
+      const toastId = toast.loading("Saving order...");
+
+      try {
+        const result = await reorderLinks(newLinks.map((l) => l.id));
+
+        if (result.success) {
+          toast.success("Order saved", { id: toastId });
+        } else {
+          toast.error("Failed to save order", { id: toastId });
+          // Revert jika gagal (opsional, tapi good practice)
+          // onUpdate(profile);
+        }
+      } catch (error) {
+        toast.error("Error saving order", { id: toastId });
+      } finally {
+        setIsReordering(false);
+      }
+    }, 1000);
+  };
+
   const typeOptions = [
     { id: "url" as LinkType, icon: LinkIcon, label: "URL" },
     { id: "payment" as LinkType, icon: CreditCard, label: "Payment" },
@@ -327,66 +378,15 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
       {/* Link List - Compact */}
       <div className="space-y-1.5">
-        <TooltipProvider>
-          {profile.links?.map((link: any) => (
-            <div
-              key={link.id}
-              className="group flex items-center gap-2 p-2 shadow-[0px_32px_64px_-16px_#0000004c,0px_16px_32px_-8px_#0000004c,0px_8px_16px_-4px_#0000003d,0px_4px_8px_-2px_#0000003d,0px_-8px_16px_-1px_#00000029,0px_2px_4px_-1px_#0000003d,0px_0px_0px_1px_#000000,inset_0px_0px_0px_1px_#ffffff14,inset_0px_1px_0px_#ffffff33] border-none rounded-lg bg-card hover:border-primary/30 transition-all"
-            >
-              {/* Drag Handle */}
-              <div className="p-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity">
-                <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-              </div>
-
-              {/* Icon */}
-              {link.icon ? (
-                <img src={link.icon} alt="" className="h-7 w-7 rounded-md object-cover shrink-0" />
-              ) : (
-                <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center shrink-0">
-                  <LinkIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                </div>
-              )}
-
-              {/* Title */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{link.title}</p>
-                {link.url && <p className="text-[10px] text-muted-foreground truncate">{link.url}</p>}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {link.url && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-muted transition-colors">
-                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">Open link</TooltipContent>
-                  </Tooltip>
-                )}
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => handleEdit(link)} className="p-1.5 rounded-md hover:bg-muted transition-colors">
-                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Edit link</TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => handleDelete(link.id)} disabled={deletingId === link.id} className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors">
-                      {deletingId === link.id ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <Trash2 className="h-3.5 w-3.5 text-destructive" />}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Delete link</TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-          ))}
-        </TooltipProvider>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={profile.links?.map((l) => l.id) || []} strategy={verticalListSortingStrategy}>
+            <TooltipProvider>
+              {profile.links?.map((link: any) => (
+                <SortableLinkItem key={link.id} link={link} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
+              ))}
+            </TooltipProvider>
+          </SortableContext>
+        </DndContext>
 
         {/* Empty State */}
         {(!profile.links || profile.links.length === 0) && !isAdding && (
@@ -426,3 +426,82 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
 // Import Link2 icon alias
 const Link2Icon = LinkIcon;
+
+// Sortable Link Item Component
+interface SortableLinkItemProps {
+  link: any;
+  onEdit: (link: any) => void;
+  onDelete: (id: string) => void;
+  deletingId: string | null;
+}
+
+function SortableLinkItem({ link, onEdit, onDelete, deletingId }: SortableLinkItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: link.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 0,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group flex items-center gap-2 p-2 shadow-[0px_32px_64px_-16px_#0000004c,0px_16px_32px_-8px_#0000004c,0px_8px_16px_-4px_#0000003d,0px_4px_8px_-2px_#0000003d,0px_-8px_16px_-1px_#00000029,0px_2px_4px_-1px_#0000003d,0px_0px_0px_1px_#000000,inset_0px_0px_0px_1px_#ffffff14,inset_0px_1px_0px_#ffffff33] border-none rounded-lg bg-card hover:border-primary/30 transition-all"
+    >
+      {/* Drag Handle */}
+      <div {...attributes} {...listeners} className="p-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity touch-none">
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+      </div>
+
+      {/* Icon */}
+      {link.icon ? (
+        <img src={link.icon} alt="" className="h-7 w-7 rounded-md object-cover shrink-0" />
+      ) : (
+        <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center shrink-0">
+          <LinkIcon className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+      )}
+
+      {/* Title */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{link.title}</p>
+        {link.url && <p className="text-[10px] text-muted-foreground truncate">{link.url}</p>}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {link.url && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a href={link.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-muted transition-colors">
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent side="top">Open link</TooltipContent>
+          </Tooltip>
+        )}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button onClick={() => onEdit(link)} className="p-1.5 rounded-md hover:bg-muted transition-colors">
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Edit link</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button onClick={() => onDelete(link.id)} disabled={deletingId === link.id} className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors">
+              {deletingId === link.id ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <Trash2 className="h-3.5 w-3.5 text-destructive" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Delete link</TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
+  );
+}

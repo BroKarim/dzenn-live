@@ -9,10 +9,13 @@ interface PreviewLinksProps {
 export function PreviewLinks({ profile }: PreviewLinksProps) {
   const { links, cardTexture } = profile;
 
+  // Sort links by position for correct display order
+  const sortedLinks = links ? [...links].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)) : [];
+
   return (
     <div className="w-full space-y-4">
-      {links && links.length > 0 ? (
-        links.map((link) => (
+      {sortedLinks.length > 0 ? (
+        sortedLinks.map((link) => (
           <TexturedCard
             key={link.id}
             title={link.title.toUpperCase()}
