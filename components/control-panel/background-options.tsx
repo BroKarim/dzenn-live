@@ -10,7 +10,9 @@ import { BACKGROUND_COLORS } from "@/lib/background-colors";
 import { BACKGROUND_GRADIENTS } from "@/lib/background-gradients";
 import { getBackgroundPresets } from "@/server/website/background-presets/actions";
 import type { BackgroundPreset } from "@/server/website/background-presets/schema";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { updateBackground } from "@/server/user/profile/actions";
+import { toast } from "sonner";
 
 interface BackgroundOptionsProps {
   profile: ProfileEditorData;
@@ -20,6 +22,8 @@ interface BackgroundOptionsProps {
 export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptionsProps) {
   const [wallpaperPresets, setWallpaperPresets] = useState<BackgroundPreset[]>([]);
   const [isLoadingWallpapers, setIsLoadingWallpapers] = useState(true);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     async function loadWallpapers() {
@@ -31,38 +35,83 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
     loadWallpapers();
   }, []);
 
+  // Debounced save to database
+  const debouncedSave = (data: Partial<ProfileEditorData>) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    setIsSaving(true);
+    saveTimeoutRef.current = setTimeout(async () => {
+      const toastId = toast.loading("Saving background...");
+
+      try {
+        const result = await updateBackground({
+          bgType: data.bgType as any,
+          bgColor: data.bgColor,
+          bgGradientFrom: data.bgGradientFrom,
+          bgGradientTo: data.bgGradientTo,
+          bgWallpaper: data.bgWallpaper,
+          bgImage: data.bgImage,
+        });
+
+        if (result.success) {
+          toast.success("Background saved", { id: toastId });
+        } else {
+          toast.error("Failed to save", { id: toastId });
+        }
+      } catch (error) {
+        toast.error("Error saving background", { id: toastId });
+      } finally {
+        setIsSaving(false);
+      }
+    }, 1500);
+  };
+
+  const handleBackgroundChange = (updates: Partial<ProfileEditorData>) => {
+    // 1. Optimistic update - langsung update UI
+    onUpdate({ ...profile, ...updates });
+
+    // 2. Debounced save ke database
+    debouncedSave({ ...profile, ...updates });
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        onUpdate({ ...profile, bgImage: reader.result as string });
+        handleBackgroundChange({ bgImage: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
   };
 
   return (
-    <Tabs value={profile.bgType} onValueChange={(v) => onUpdate({ ...profile, bgType: v as any })}>
+    <Tabs value={profile.bgType} onValueChange={(v) => handleBackgroundChange({ bgType: v as any })}>
       <TabsList className="grid w-full grid-cols-4 h-auto bg-transparent  p-1 gap-1">
         <TabsTrigger value="color" className="p-0 h-full w-full">
-          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/20">
+          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 bg-muted/20">
             <Palette className="h-6 w-6 text-muted-foreground" />
+            <span className="text-[10px] font-medium text-muted-foreground">Color</span>
           </div>
         </TabsTrigger>
         <TabsTrigger value="gradient" className="p-0 h-full w-full">
-          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/20">
+          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 bg-muted/20">
             <Rainbow className="h-6 w-6 text-muted-foreground" />
+            <span className="text-[10px] font-medium text-muted-foreground">Gradient</span>
           </div>
         </TabsTrigger>
         <TabsTrigger value="wallpaper" className="p-0 h-full w-full">
-          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/20">
+          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 bg-muted/20">
             <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            <span className="text-[10px] font-medium text-muted-foreground">Wallpaper</span>
           </div>
         </TabsTrigger>
         <TabsTrigger value="image" className="p-0 h-full w-full">
-          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted/20">
+          <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 bg-muted/20">
             <Upload className="h-6 w-6 text-muted-foreground" />
+            <span className="text-[10px] font-medium text-muted-foreground">Image</span>
           </div>
         </TabsTrigger>
       </TabsList>
@@ -72,7 +121,7 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
           {BACKGROUND_COLORS.map((color) => (
             <button
               key={color}
-              onClick={() => onUpdate({ ...profile, bgColor: color })}
+              onClick={() => handleBackgroundChange({ bgColor: color })}
               className={`relative aspect-square h-10 w-10 rounded-full transition-all duration-200 ${
                 profile.bgColor === color ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110 z-10" : "hover:scale-110 active:scale-95 border border-black/5"
               }`}
@@ -85,7 +134,7 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
 
         <div className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
           <div className="relative h-8 w-12 overflow-hidden rounded-md border shadow-sm">
-            <Input type="color" value={profile.bgColor || "#000000"} onChange={(e) => onUpdate({ ...profile, bgColor: e.target.value })} className="absolute -inset-2 h-12 w-16 cursor-pointer" />
+            <Input type="color" value={profile.bgColor || "#000000"} onChange={(e) => handleBackgroundChange({ bgColor: e.target.value })} className="absolute -inset-2 h-12 w-16 cursor-pointer" />
           </div>
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Custom Color</span>
         </div>
@@ -96,7 +145,7 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
           {BACKGROUND_GRADIENTS.map((gradient, i) => (
             <button
               key={i}
-              onClick={() => onUpdate({ ...profile, bgGradientFrom: gradient.from, bgGradientTo: gradient.to })}
+              onClick={() => handleBackgroundChange({ bgGradientFrom: gradient.from, bgGradientTo: gradient.to })}
               className={`relative aspect-square h-10 w-10 rounded-md transition-all duration-200 ${
                 profile.bgGradientFrom === gradient.from && profile.bgGradientTo === gradient.to ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110 z-10" : "hover:scale-110 active:scale-95 border border-black/5"
               }`}
@@ -123,7 +172,7 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
             {wallpaperPresets.map((preset) => (
               <button
                 key={preset.id}
-                onClick={() => onUpdate({ ...profile, bgWallpaper: preset.url })}
+                onClick={() => handleBackgroundChange({ bgWallpaper: preset.url })}
                 className={`relative h-20 overflow-hidden rounded-lg border-2 transition-all ${
                   profile.bgWallpaper === preset.url ? "border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background scale-105" : "border-transparent hover:border-primary/50 hover:scale-105"
                 }`}
@@ -150,7 +199,7 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
             <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 cursor-pointer opacity-0" />
           </div>
           {profile.bgImage && (
-            <Button variant="outline" size="sm" onClick={() => onUpdate({ ...profile, bgImage: null })} className="w-full text-destructive">
+            <Button variant="outline" size="sm" onClick={() => handleBackgroundChange({ bgImage: null })} className="w-full text-destructive">
               Remove Image
             </Button>
           )}

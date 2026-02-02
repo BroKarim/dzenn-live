@@ -55,6 +55,25 @@ export async function updateLayout(layout: ProfileLayout) {
   }
 }
 
+export async function updateBackground(data: { bgType?: "color" | "gradient" | "wallpaper" | "image"; bgColor?: string; bgGradientFrom?: string | null; bgGradientTo?: string | null; bgWallpaper?: string | null; bgImage?: string | null }) {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const updatedProfile = await db.profile.update({
+      where: { userId: user.id },
+      data,
+      select: profileEditorPayload,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/${user.username}`);
+
+    return { success: true, data: updatedProfile };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update background" };
+  }
+}
+
 export async function getProfile() {
   try {
     const user = await getAuthenticatedUser();
