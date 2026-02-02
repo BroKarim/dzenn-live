@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { SocialLinkSchema, LinkSchema, SocialLinkInput, LinkInput } from "./schema";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { uploadToS3 } from "@/lib/s3";
+import { uploadToS3, deleteFromS3 } from "@/lib/s3";
 import { optimizeImage } from "@/lib/media";
 
 // ============= SOCIAL LINKS =============
@@ -149,6 +149,26 @@ export async function updateLink(id: string, data: Partial<LinkInput>) {
       return { success: false, error: "Unauthorized" };
     }
 
+    // Fetch existing link to check for files to delete
+    const existingLink = await db.link.findUnique({
+      where: { id },
+      select: { icon: true, mediaUrl: true },
+    });
+
+    if (!existingLink) {
+      return { success: false, error: "Link not found" };
+    }
+
+    // Delete old icon if updated
+    if (data.icon && existingLink.icon && data.icon !== existingLink.icon) {
+      await deleteFromS3(existingLink.icon);
+    }
+
+    // Delete old media if updated
+    if (data.mediaUrl && existingLink.mediaUrl && data.mediaUrl !== existingLink.mediaUrl) {
+      await deleteFromS3(existingLink.mediaUrl);
+    }
+
     const link = await db.link.update({
       where: { id },
       data,
@@ -172,6 +192,17 @@ export async function deleteLink(id: string) {
 
     if (!session?.user) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    // Fetch link to delete its files from S3
+    const link = await db.link.findUnique({
+      where: { id },
+      select: { icon: true, mediaUrl: true },
+    });
+
+    if (link) {
+      if (link.icon) await deleteFromS3(link.icon);
+      if (link.mediaUrl) await deleteFromS3(link.mediaUrl);
     }
 
     await db.link.delete({

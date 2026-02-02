@@ -18,6 +18,7 @@ export function PreviewLinks({ profile }: PreviewLinksProps) {
             title={link.title.toUpperCase()}
             url={link.url}
             description={link.description ?? undefined}
+            icon={link.icon ?? undefined}
             imageUrl={link.mediaType === "image" ? (link.mediaUrl ?? undefined) : undefined}
             videoUrl={link.mediaType === "video" ? (link.mediaUrl ?? undefined) : undefined}
             isStripeEnabled={!!link.paymentProvider}

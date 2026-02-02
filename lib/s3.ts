@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const s3Client = new S3Client({
   region: process.env.S3_REGION!,
@@ -23,6 +23,27 @@ export async function uploadToS3(file: Buffer, fileName: string, contentType: st
   await s3Client.send(command);
 
   return `${process.env.S3_PUBLIC_URL}/${key}`;
+}
+
+export async function deleteFromS3(url: string | null | undefined): Promise<void> {
+  if (!url) return;
+
+  try {
+    const publicUrl = process.env.S3_PUBLIC_URL!;
+    if (!url.startsWith(publicUrl)) return;
+
+    const key = url.replace(`${publicUrl}/`, "");
+    const bucket = process.env.S3_BUCKET!;
+
+    const command = new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    await s3Client.send(command);
+  } catch (error) {
+    console.error("Failed to delete from S3:", error);
+  }
 }
 
 export async function uploadBase64ToS3(base64: string, fileName: string): Promise<string> {

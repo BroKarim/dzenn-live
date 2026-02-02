@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Link as LinkIcon, CreditCard, Image as ImageIcon, Loader2, GripVertical, ChevronRight, X, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Link as LinkIcon, CreditCard, Image as ImageIcon, Loader2, GripVertical, ChevronRight, X, ExternalLink, Pencil } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
 import { createLink, deleteLink, uploadMedia } from "@/server/user/links/actions";
+import { LinkEditDialog } from "./link-edit-dialog";
 import { toast } from "sonner";
 import { Button2 } from "@/components/ui/button-2";
 
@@ -26,6 +27,8 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [editingLink, setEditingLink] = useState<any | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const [newLink, setNewLink] = useState({
     title: "",
@@ -42,7 +45,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/x-icon", "image/vnd.microsoft.icon", "image/svg+xml"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/x-icon", "image/vnd.microsoft.icon", "image/svg+xml", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Invalid file type. Please upload JPG, PNG, WebP, ICO or SVG.");
       return;
@@ -53,17 +56,19 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       const result = reader.result as string;
       setLogoPreview(result);
 
+      const uploadToast = toast.loading("Uploading icon...");
+
       try {
         const uploadResult = await uploadMedia(result, file.name, "icon");
         if (uploadResult.success && uploadResult.url) {
           setNewLink({ ...newLink, icon: uploadResult.url });
-          toast.success("Icon uploaded!");
+          toast.success("Icon uploaded!", { id: uploadToast });
         } else {
-          toast.error("Failed to upload icon");
+          toast.error(uploadResult.error || "Failed to upload icon", { id: uploadToast });
           setLogoPreview(null);
         }
       } catch (error) {
-        toast.error("Error uploading icon");
+        toast.error("Error uploading icon", { id: uploadToast });
         setLogoPreview(null);
       }
     };
@@ -74,17 +79,18 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Invalid file type. Please upload JPG, PNG or WebP.");
       return;
     }
 
-    const isVideo = file.type.startsWith("video/");
     const reader = new FileReader();
     reader.onloadend = async () => {
       const result = reader.result as string;
       setMediaPreview(result);
+
+      const uploadToast = toast.loading("Uploading media...");
 
       try {
         const uploadResult = await uploadMedia(result, file.name, "media");
@@ -92,15 +98,15 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
           setNewLink({
             ...newLink,
             mediaUrl: uploadResult.url,
-            mediaType: isVideo ? "video" : "image",
+            mediaType: "image",
           });
-          toast.success("Media uploaded!");
+          toast.success("Media uploaded!", { id: uploadToast });
         } else {
-          toast.error("Failed to upload media");
+          toast.error(uploadResult.error || "Failed to upload media", { id: uploadToast });
           setMediaPreview(null);
         }
       } catch (error) {
-        toast.error("Error uploading media");
+        toast.error("Error uploading media", { id: uploadToast });
         setMediaPreview(null);
       }
     };
@@ -191,6 +197,18 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     });
   };
 
+  const handleEdit = (link: any) => {
+    setEditingLink(link);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = (updatedLink: any) => {
+    onUpdate({
+      ...profile,
+      links: profile.links.map((l) => (l.id === updatedLink.id ? updatedLink : l)),
+    });
+  };
+
   const typeOptions = [
     { id: "url" as LinkType, icon: LinkIcon, label: "URL" },
     { id: "payment" as LinkType, icon: CreditCard, label: "Payment" },
@@ -221,6 +239,21 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
           </div>
 
           <div className="p-3 space-y-3">
+            {/* Title Input - Always visible */}
+            <div className="flex gap-2">
+              {/* Icon Upload */}
+              <div className="relative shrink-0">
+                <input id="add-icon-upload" type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
+                <label htmlFor="add-icon-upload" className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
+                  {logoPreview ? <img src={logoPreview} alt="Icon" className="h-full w-full object-cover" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
+                </label>
+              </div>
+
+              <Input value={newLink.title} onChange={(e) => setNewLink({ ...newLink, title: e.target.value })} placeholder="Link title" className="h-10 flex-1 text-sm" />
+            </div>
+
+            {/* Description Input - Always visible */}
+            <Input value={newLink.description} onChange={(e) => setNewLink({ ...newLink, description: e.target.value })} placeholder="Description (optional)" className="h-10 text-sm" />
             {/* Type Selector - Compact Pills */}
             <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
               {typeOptions.map((type) => {
@@ -242,21 +275,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
                 );
               })}
             </div>
-
-            {/* Title + Icon Row */}
-            <div className="flex gap-2">
-              {/* Icon Upload */}
-              <div className="relative shrink-0">
-                <input type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
-                  {logoPreview ? <img src={logoPreview} alt="Icon" className="h-full w-full object-cover" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
-                </div>
-              </div>
-
-              {/* Title Input */}
-              <Input value={newLink.title} onChange={(e) => setNewLink({ ...newLink, title: e.target.value })} placeholder="Link title" className="h-10 flex-1 text-sm" />
-            </div>
-
             {/* Dynamic Content Based on Type */}
             {selectedType === "url" && <Input value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })} placeholder="https://example.com" className="h-10 text-sm" />}
 
@@ -279,8 +297,8 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
             {selectedType === "media" && (
               <div className="relative">
-                <input type="file" accept="image/*" onChange={handleMediaUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                <div className="h-20 rounded-lg border border-dashed border-border bg-muted/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
+                <input id="media-upload" type="file" accept="image/*" onChange={handleMediaUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" style={{ pointerEvents: "auto" }} />
+                <label htmlFor="media-upload" className="h-20 rounded-lg border border-dashed border-border bg-muted/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
                   {mediaPreview ? (
                     <img src={mediaPreview} alt="Media" className="h-full w-full object-cover" />
                   ) : (
@@ -289,7 +307,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
                       <span className="text-[10px] text-muted-foreground">Click to upload</span>
                     </>
                   )}
-                </div>
+                </label>
               </div>
             )}
 
@@ -350,6 +368,15 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
                 <Tooltip>
                   <TooltipTrigger asChild>
+                    <button onClick={() => handleEdit(link)} className="p-1.5 rounded-md hover:bg-muted transition-colors">
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Edit link</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <button onClick={() => handleDelete(link.id)} disabled={deletingId === link.id} className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors">
                       {deletingId === link.id ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <Trash2 className="h-3.5 w-3.5 text-destructive" />}
                     </button>
@@ -390,6 +417,9 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Link Dialog */}
+      <LinkEditDialog link={editingLink} open={editDialogOpen} onOpenChange={setEditDialogOpen} onSave={handleEditSave} />
     </div>
   );
 }
