@@ -8,7 +8,7 @@ import { ModeSwitcher } from "@/components/mode-switcher";
 import { ProfileEditorData } from "@/server/user/profile/payloads";
 import { useEditorStore } from "@/lib/stores/editor-store";
 import { useState, useTransition } from "react";
-import { updateProfile, updateBackground, updateBackgroundEffects, updateBackgroundPattern } from "@/server/user/profile/actions";
+import { updateProfile, updateBackground, updateBackgroundEffects, updateBackgroundPattern, updateCardTexture } from "@/server/user/profile/actions";
 import { toast } from "sonner";
 
 interface EditorHeaderProps {
@@ -66,6 +66,11 @@ export default function EditorHeader({ profile }: EditorHeaderProps) {
         // Pattern
         if (JSON.stringify(draftProfile.bgPattern) !== JSON.stringify(originalProfile?.bgPattern)) {
           updates.push(updateBackgroundPattern(draftProfile.bgPattern as any));
+        }
+
+        // Card Texture
+        if (draftProfile.cardTexture !== originalProfile?.cardTexture) {
+          updates.push(updateCardTexture(draftProfile.cardTexture as any));
         }
 
         const results = await Promise.all(updates);

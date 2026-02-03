@@ -64,7 +64,7 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
       className="overflow-hidden"
     >
       <motion.div initial={{ y: -10 }} animate={{ y: 0 }} exit={{ y: -10 }} transition={{ duration: 0.2, delay: 0.1 }} className="px-6 pb-6">
-        <div className="flex flex-col gap-4 border-t border-white/10 pt-4">
+        <div className="flex flex-col gap-4  pt-4">
           {description && (
             <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-sm text-white/80 leading-relaxed">
               {description}
@@ -75,13 +75,13 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="aspect-video w-full overflow-hidden rounded-xl bg-black/20 flex items-center justify-center border border-white/5"
+              className="aspect-video w-full overflow-hidden rounded-xl bg-black/20 flex items-center justify-center  "
             >
               <PlayCircle className="h-10 w-10 text-white/50" />
             </motion.div>
           )}
           {isStripeEnabled && (
-            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }} className="flex items-center gap-3 rounded-xl bg-white/10 p-3 border border-white/20">
+            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }} className="flex items-center gap-3 rounded-xl bg-white/10 p-3">
               <CreditCard className="h-5 w-5 text-white" />
               <span className="text-xs font-bold text-white">Support via Stripe</span>
             </motion.div>
@@ -112,7 +112,11 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
 
   const WrapperProps = {
     onClick: handleClick,
-    className: `group relative w-full cursor-pointer overflow-hidden rounded-md transition-all duration-300 shadow-xl ${!isExpanded && "hover:scale-[1.02] active:scale-[0.98]"} ${className} ${texture !== "glassy" ? backgroundColor : ""}`,
+    className: `group relative w-full cursor-pointer overflow-hidden rounded-md transition-all duration-300 ${!isExpanded && "hover:scale-[1.02] active:scale-[0.98]"} ${className} ${texture !== "glassy" ? backgroundColor : ""} ${
+      texture === "base"
+        ? "shadow-[0px_32px_64px_-16px_#0000004c,0px_16px_32px_-8px_#0000004c,0px_8px_16px_-4px_#0000003d,0px_4px_8px_-2px_#0000003d,0px_-8px_16px_-1px_#00000029,0px_2px_4px_-1px_#0000003d,0px_0px_0px_1px_#000000,inset_0px_0px_0px_1px_#ffffff14,inset_0px_1px_0px_#ffffff33] border-none"
+        : ""
+    }`,
   };
 
   const Content = (

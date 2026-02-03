@@ -25,13 +25,13 @@ export function PreviewLinks({ profile }: PreviewLinksProps) {
             imageUrl={link.mediaType === "image" ? (link.mediaUrl ?? undefined) : undefined}
             videoUrl={link.mediaType === "video" ? (link.mediaUrl ?? undefined) : undefined}
             isStripeEnabled={!!link.paymentProvider}
-            backgroundColor="bg-amber-500"
+            backgroundColor="bg-[#222]"
             titleColor="text-white"
             texture={cardTexture}
           />
         ))
       ) : (
-        <TexturedCard title="ADD YOUR FIRST LINK" backgroundColor="bg-zinc-800" titleColor="text-white" texture={cardTexture} />
+        <TexturedCard title="ADD YOUR FIRST LINK" backgroundColor="" titleColor="text-white" texture={cardTexture} />
       )}
     </div>
   );

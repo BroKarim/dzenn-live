@@ -12,9 +12,9 @@ export function PreviewProfile({ profile }: PreviewProfileProps) {
         profile.layout === "center" ? "flex-col items-center text-center" : profile.layout === "left_stack" ? "flex-col items-start text-left" : "items-center justify-between text-left"
       }`}
     >
-      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-4 border-white/20 bg-zinc-200 shadow-xl">
+      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-full ">
         {profile.avatarUrl ? (
-          <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+          <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover " />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-2xl font-bold text-white">{profile.displayName?.charAt(0).toUpperCase() || "B"}</div>
         )}
