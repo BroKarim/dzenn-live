@@ -2,6 +2,7 @@
 
 import { Plus, Trash2, Edit2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Button2 } from "@/components/button-2";
 import { Input } from "@/components/ui/input";
 import { Globe } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -79,9 +80,11 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
         }}
       >
         <DialogTrigger asChild>
-          <Button variant="outline" className="w-full border-dashed py-6 gap-2 border-2">
-            <Plus className="h-4 w-4" /> Add Social Media
-          </Button>
+          <div className="flex justify-end">
+            <Button2 variant="blue" className="w-1/3 border-dashed rounded-md border">
+              <Plus className="h-4 w-4" /> Add Social Media
+            </Button2>
+          </div>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>

@@ -219,7 +219,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     <div className="space-y-3">
       {!isAdding && (
         <div className="flex justify-end">
-          <Button2 onClick={() => setIsAdding(true)} variant="blue" size="sm" className="w-1/3 rounded-md">
+          <Button2 onClick={() => setIsAdding(true)} variant="blue"  className="w-1/3 rounded-md">
             <Plus className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
             <span>Add link</span>
           </Button2>
@@ -386,17 +386,17 @@ function SortableLinkItem({ link, onEdit, onDelete, deletingId }: SortableLinkIt
     <div
       ref={setNodeRef}
       style={style}
-      className="group flex items-center rounded-full gap-2 p-2 shadow-[0px_32px_64px_-16px_#0000004c,0px_16px_32px_-8px_#0000004c,0px_8px_16px_-4px_#0000003d,0px_4px_8px_-2px_#0000003d,0px_-8px_16px_-1px_#00000029,0px_2px_4px_-1px_#0000003d,0px_0px_0px_1px_#000000,inset_0px_0px_0px_1px_#ffffff14,inset_0px_1px_0px_#ffffff33] border-none bg-card hover:border-primary/30 transition-all"
+      className="group flex items-center rounded-xl gap-2 py-3 shadow-[0px_32px_64px_-16px_#0000004c,0px_16px_32px_-8px_#0000004c,0px_8px_16px_-4px_#0000003d,0px_4px_8px_-2px_#0000003d,0px_-8px_16px_-1px_#00000029,0px_2px_4px_-1px_#0000003d,0px_0px_0px_1px_#000000,inset_0px_0px_0px_1px_#ffffff14,inset_0px_1px_0px_#ffffff33] border-none bg-card hover:border-primary/30 transition-all"
     >
       <div {...attributes} {...listeners} className="p-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity touch-none">
         <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
 
       {link.icon ? (
-        <img src={link.icon} alt="" className="h-7 w-7 rounded-md object-cover shrink-0" />
+        <img src={link.icon} alt="" className="h-10 w-10 rounded-md object-cover shrink-0" />
       ) : (
-        <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center shrink-0">
-          <LinkIcon className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center shrink-0">
+          <LinkIcon className="h-4 w-4 text-muted-foreground" />
         </div>
       )}
 

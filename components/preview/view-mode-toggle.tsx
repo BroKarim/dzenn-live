@@ -9,7 +9,7 @@ interface ViewModeToggleProps {
 export function ViewModeToggle({ viewMode, setViewMode }: ViewModeToggleProps) {
   return (
     <div className="flex justify-center">
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+      <div className="flex items-center gap-1 rounded-lg   p-1">
         <button
           onClick={() => setViewMode("mobile")}
           className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${

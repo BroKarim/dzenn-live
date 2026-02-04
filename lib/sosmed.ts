@@ -1,4 +1,4 @@
-import { Twitter,  Github, Linkedin, Youtube, Hash, Music2, Box, PenTool, MessageCircle, Send, Mail, Globe } from "lucide-react"
+import { Globe } from "lucide-react"
 import { Icons } from "@/components/icons"
 export const SOCIAL_PLATFORMS = [
   { id: "x", label: "X / Twitter", icon: Icons.xtwiter },
