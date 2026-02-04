@@ -53,21 +53,17 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
 
   return (
     <div className="space-y-2 px-3 pb-4">
-      {/* Profile Section */}
       <div className="px-2 pb-2">
         <ProfileEditor profile={profile} onUpdate={onUpdate} />
       </div>
 
-      {/* Layout Section */}
       <div className="px-2 pb-2">
         <ProfileLayoutSelector profile={profile} onUpdate={onUpdate} />
       </div>
-      {/* Links Section */}
       <div className="px-2 pb-2">
         <LinkCardEditor profile={profile} onUpdate={onUpdate} />
       </div>
 
-      {/* Social Links Section - tetap menggunakan accordion existing */}
       <Collapsible open={openSections.social}>
         <CollapsibleTrigger onClick={() => toggleSection("social")} className="w-full">
           <SectionHeader icon={User} title="Social Links" description="Connect your social accounts" isOpen={openSections.social} />

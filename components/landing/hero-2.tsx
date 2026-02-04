@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 export function Hero() {
   const [username, setUsername] = useState("");
@@ -23,7 +22,9 @@ export function Hero() {
     } else {
       // If logged in, go to editor/onboarding
       // Check if user has a username already
-      const currentUsername = session.user.username;
+      const user = session.user as { username?: string | null };
+      const currentUsername = user.username;
+
       if (currentUsername) {
         router.push(`/editor/${currentUsername}`);
       } else {
@@ -62,7 +63,7 @@ export function Hero() {
             >
               <form onSubmit={handleClaim} className="flex flex-col sm:flex-row gap-2">
                 <div className="flex-1 flex items-center px-4 bg-zinc-50/50 rounded-xl focus-within:ring-1 focus-within:ring-zinc-200 transition-all">
-                  <span className="text-zinc-400 font-medium select-none text-sm sm:text-base whitespace-nowrap">ohmylink.ai/</span>
+                  <span className="text-zinc-400 font-medium select-none text-sm sm:text-base whitespace-nowrap">dzenn.link</span>
                   <Input
                     type="text"
                     placeholder="username"

@@ -178,21 +178,10 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
       return;
     }
 
-    setIsSaving(true);
-    try {
-      const result = await updateLink(link.id, payload);
-      if (result.success && result.data) {
-        onSave(result.data as LinkData);
-        toast.success("Link updated!");
-        onOpenChange(false);
-      } else {
-        toast.error(result.error || "Failed to update link");
-      }
-    } catch (error) {
-      toast.error("Error updating link");
-    } finally {
-      setIsSaving(false);
-    }
+    // Just update the local state, don't save to DB yet
+    onSave({ ...link, ...payload });
+    toast.success("Changes applied to preview");
+    onOpenChange(false);
   };
 
   const typeOptions = [

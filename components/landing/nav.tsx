@@ -33,7 +33,10 @@ export function LandingNav() {
         {isPending ? (
           <div className="px-4 py-1.5 w-16 h-5 animate-pulse bg-zinc-800 rounded-full" />
         ) : session ? (
-          <Link href="/dashboard" className="group px-4 py-1.5 rounded-full text-[13px] font-medium text-white bg-zinc-800 hover:bg-zinc-700 transition-all duration-200 flex items-center gap-1.5">
+          <Link
+            href={(session.user as any).username ? `/editor/${(session.user as any).username}` : "/onboarding/username"}
+            className="group px-4 py-1.5 rounded-full text-[13px] font-medium text-white bg-zinc-800 hover:bg-zinc-700 transition-all duration-200 flex items-center gap-1.5"
+          >
             Editor
             <ArrowRightIcon className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>

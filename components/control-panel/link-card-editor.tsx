@@ -166,21 +166,12 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    setDeletingId(id);
-    try {
-      const result = await deleteLink(id);
-      if (result.success) {
-        onUpdate({ ...profile, links: profile.links.filter((l) => l.id !== id) });
-        toast.success("Link deleted!");
-      } else {
-        toast.error(result.error || "Failed to delete link");
-      }
-    } catch (error) {
-      toast.error("Error deleting link");
-    } finally {
-      setDeletingId(null);
-    }
+  const handleDelete = (id: string) => {
+    onUpdate({
+      ...profile,
+      links: profile.links.filter((l) => l.id !== id),
+    });
+    toast.success("Link removed from preview");
   };
 
   const resetForm = () => {
@@ -212,9 +203,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     });
   };
 
-  const [isReordering, setIsReordering] = useState(false);
-  const reorderTimeoutRef = React.useRef<NodeJS.Timeout>(null);
-
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -224,40 +212,12 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     const oldIndex = profile.links.findIndex((l) => l.id === active.id);
     const newIndex = profile.links.findIndex((l) => l.id === over.id);
 
-    // 1. Optimistic Update: Langsung update state lokal agar UI snap instant
     const newLinks = arrayMove(profile.links, oldIndex, newIndex).map((link, index) => ({
       ...link,
-      position: index, // Update position di local state juga
+      position: index,
     }));
 
     onUpdate({ ...profile, links: newLinks });
-    setIsReordering(true);
-
-    // 2. Debouncing: Clear timeout sebelumnya jika user nge-drag lagi dgn cepat
-    if (reorderTimeoutRef.current) {
-      clearTimeout(reorderTimeoutRef.current);
-    }
-
-    // 3. Set timeout baru untuk kirim ke server (tunggu 1 detik setelah berhenti drag)
-    reorderTimeoutRef.current = setTimeout(async () => {
-      const toastId = toast.loading("Saving order...");
-
-      try {
-        const result = await reorderLinks(newLinks.map((l) => l.id));
-
-        if (result.success) {
-          toast.success("Order saved", { id: toastId });
-        } else {
-          toast.error("Failed to save order", { id: toastId });
-          // Revert jika gagal (opsional, tapi good practice)
-          // onUpdate(profile);
-        }
-      } catch (error) {
-        toast.error("Error saving order", { id: toastId });
-      } finally {
-        setIsReordering(false);
-      }
-    }, 1000);
   };
 
   const typeOptions = [
@@ -268,7 +228,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
   return (
     <div className="space-y-3">
-      {/* Add New Link Button - Compact & Aligned Right */}
       {!isAdding && (
         <div className="flex justify-end">
           <Button2 onClick={() => setIsAdding(true)} variant="blue" size="sm" className="w-1/3 rounded-md">
@@ -278,10 +237,8 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
         </div>
       )}
 
-      {/* Compact Add Form */}
       {isAdding && (
         <div className="border border-border rounded-xl bg-card overflow-hidden animate-in slide-in-from-top-2 duration-200">
-          {/* Form Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
             <span className="text-xs font-medium text-foreground">New Link</span>
             <button onClick={resetForm} className="p-1 rounded-md hover:bg-muted transition-colors">
@@ -290,9 +247,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
           </div>
 
           <div className="p-3 space-y-3">
-            {/* Title Input - Always visible */}
             <div className="flex gap-2">
-              {/* Icon Upload */}
               <div className="relative shrink-0">
                 <input id="add-icon-upload" type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
                 <label htmlFor="add-icon-upload" className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
@@ -303,9 +258,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
               <Input value={newLink.title} onChange={(e) => setNewLink({ ...newLink, title: e.target.value })} placeholder="Link title" className="h-10 flex-1 text-sm" />
             </div>
 
-            {/* Description Input - Always visible */}
             <Input value={newLink.description} onChange={(e) => setNewLink({ ...newLink, description: e.target.value })} placeholder="Description (optional)" className="h-10 text-sm" />
-            {/* Type Selector - Compact Pills */}
             <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
               {typeOptions.map((type) => {
                 const Icon = type.icon;
@@ -376,11 +329,11 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
         </div>
       )}
 
-      {/* Link List - Compact */}
       <div className="space-y-1.5">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={profile.links?.map((l) => l.id) || []} strategy={verticalListSortingStrategy}>
             <TooltipProvider>
+              {/* link preview */}
               {profile.links?.map((link: any) => (
                 <SortableLinkItem key={link.id} link={link} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
               ))}
@@ -388,7 +341,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
           </SortableContext>
         </DndContext>
 
-        {/* Empty State */}
         {(!profile.links || profile.links.length === 0) && !isAdding && (
           <div className="text-center py-6">
             <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted mb-2">
@@ -400,7 +352,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -418,16 +369,13 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Link Dialog */}
       <LinkEditDialog link={editingLink} open={editDialogOpen} onOpenChange={setEditDialogOpen} onSave={handleEditSave} />
     </div>
   );
 }
 
-// Import Link2 icon alias
 const Link2Icon = LinkIcon;
 
-// Sortable Link Item Component
 interface SortableLinkItemProps {
   link: any;
   onEdit: (link: any) => void;
@@ -449,14 +397,12 @@ function SortableLinkItem({ link, onEdit, onDelete, deletingId }: SortableLinkIt
     <div
       ref={setNodeRef}
       style={style}
-      className="group flex items-center gap-2 p-2 shadow-[0px_32px_64px_-16px_#0000004c,0px_16px_32px_-8px_#0000004c,0px_8px_16px_-4px_#0000003d,0px_4px_8px_-2px_#0000003d,0px_-8px_16px_-1px_#00000029,0px_2px_4px_-1px_#0000003d,0px_0px_0px_1px_#000000,inset_0px_0px_0px_1px_#ffffff14,inset_0px_1px_0px_#ffffff33] border-none rounded-lg bg-card hover:border-primary/30 transition-all"
+      className="group flex items-center rounded-full gap-2 p-2 shadow-[0px_32px_64px_-16px_#0000004c,0px_16px_32px_-8px_#0000004c,0px_8px_16px_-4px_#0000003d,0px_4px_8px_-2px_#0000003d,0px_-8px_16px_-1px_#00000029,0px_2px_4px_-1px_#0000003d,0px_0px_0px_1px_#000000,inset_0px_0px_0px_1px_#ffffff14,inset_0px_1px_0px_#ffffff33] border-none bg-card hover:border-primary/30 transition-all"
     >
-      {/* Drag Handle */}
       <div {...attributes} {...listeners} className="p-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity touch-none">
         <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
 
-      {/* Icon */}
       {link.icon ? (
         <img src={link.icon} alt="" className="h-7 w-7 rounded-md object-cover shrink-0" />
       ) : (

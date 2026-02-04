@@ -7,8 +7,9 @@ import { DomainView } from "@/components/domain-view";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { ProfileEditorData } from "@/server/user/profile/payloads";
 import { useEditorStore } from "@/lib/stores/editor-store";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { updateProfile, updateBackground, updateBackgroundEffects, updateBackgroundPattern, updateCardTexture } from "@/server/user/profile/actions";
+import { updateLink, deleteLink, reorderLinks } from "@/server/user/links/actions";
 import { toast } from "sonner";
 
 interface EditorHeaderProps {
@@ -16,7 +17,7 @@ interface EditorHeaderProps {
 }
 
 export default function EditorHeader({ profile }: EditorHeaderProps) {
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "ohmylink.com").replace(/https?:\/\//, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "dzenn.link").replace(/https?:\/\//, "");
   const username = (profile as any).user?.username || profile.slug || "user";
   const fullUrl = `${baseUrl}/${username}`;
 
@@ -71,6 +72,33 @@ export default function EditorHeader({ profile }: EditorHeaderProps) {
         // Card Texture
         if (draftProfile.cardTexture !== originalProfile?.cardTexture) {
           updates.push(updateCardTexture(draftProfile.cardTexture as any));
+        }
+
+        // Links Logic
+        const originalLinks = originalProfile?.links || [];
+        const draftLinks = draftProfile.links || [];
+
+        // 1. Find deleted links
+        const draftIds = new Set(draftLinks.map((l) => l.id));
+        const deletedLinks = originalLinks.filter((l) => !draftIds.has(l.id));
+        for (const link of deletedLinks) {
+          updates.push(deleteLink(link.id));
+        }
+
+        // 2. Find updated links (content change)
+        for (const draftLink of draftLinks) {
+          const originalLink = originalLinks.find((l) => l.id === draftLink.id);
+          if (originalLink && JSON.stringify(draftLink) !== JSON.stringify(originalLink)) {
+            const { id, ...linkData } = draftLink;
+            updates.push(updateLink(id, linkData as any));
+          }
+        }
+
+        // 3. Reordering (if the order of IDs changed)
+        const originalOrder = originalLinks.map((l) => l.id).join(",");
+        const draftOrder = draftLinks.map((l) => l.id).join(",");
+        if (originalOrder !== draftOrder) {
+          updates.push(reorderLinks(draftLinks.map((l) => l.id)));
         }
 
         const results = await Promise.all(updates);

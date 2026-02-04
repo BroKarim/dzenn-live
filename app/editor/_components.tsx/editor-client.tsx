@@ -18,21 +18,23 @@ export default function EditorClient({ initialProfile }: EditorClientProps) {
   const [viewMode, setViewMode] = useState<"mobile" | "desktop">("mobile");
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 
-  const { draftProfile, isDirty, initializeEditor, updateDraft, discardChanges } = useEditorStore();
+  const { draftProfile, isDirty, initializeEditor, updateDraft, discardChanges, _hasHydrated } = useEditorStore();
 
   useEffect(() => {
-    initializeEditor(initialProfile);
-  }, [initialProfile, initializeEditor]);
+    if (_hasHydrated) {
+      initializeEditor(initialProfile);
+    }
+  }, [initialProfile, initializeEditor, _hasHydrated]);
 
   useEffect(() => {
-    if (isDirty && draftProfile) {
+    if (_hasHydrated && isDirty && draftProfile) {
       const hasDraftFromPreviousSession = JSON.stringify(draftProfile) !== JSON.stringify(initialProfile);
 
       if (hasDraftFromPreviousSession) {
         setShowUnsavedDialog(true);
       }
     }
-  }, []);
+  }, [_hasHydrated]);
 
   const handleRestoreDraft = () => {
     setShowUnsavedDialog(false);
@@ -42,6 +44,15 @@ export default function EditorClient({ initialProfile }: EditorClientProps) {
     discardChanges();
     setShowUnsavedDialog(false);
   };
+
+  if (!_hasHydrated) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center gap-4 bg-background">
+        <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-medium animate-pulse">Synchronizing editor...</p>
+      </div>
+    );
+  }
 
   const currentProfile = draftProfile || initialProfile;
 

@@ -3,16 +3,12 @@ import { persist } from "zustand/middleware";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
 
 interface EditorState {
-  // Original data from DB
   originalProfile: ProfileEditorData | null;
-
-  // Current edited data (draft)
   draftProfile: ProfileEditorData | null;
-
-  // Dirty state tracking
   isDirty: boolean;
+  _hasHydrated: boolean;
 
-  // Actions
+  setHasHydrated: (state: boolean) => void;
   initializeEditor: (profile: ProfileEditorData) => void;
   updateDraft: (profile: ProfileEditorData) => void;
   markAsSaved: () => void;
@@ -26,23 +22,23 @@ export const useEditorStore = create<EditorState>()(
       originalProfile: null,
       draftProfile: null,
       isDirty: false,
+      _hasHydrated: false,
+
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       initializeEditor: (profile) => {
-        const { draftProfile } = get();
+        const state = get();
 
-        // Check if there's a draft that's newer than DB data
-        if (draftProfile && JSON.stringify(draftProfile) !== JSON.stringify(profile)) {
-          // There's unsaved changes from previous session
+        if (!state._hasHydrated) return;
+
+        if (!state.originalProfile || state.originalProfile.id !== profile.id) {
+          const { draftProfile } = state;
+          const hasDraft = draftProfile && JSON.stringify(draftProfile) !== JSON.stringify(profile);
+
           set({
             originalProfile: profile,
-            isDirty: true,
-          });
-        } else {
-          // No draft or draft is same as DB
-          set({
-            originalProfile: profile,
-            draftProfile: profile,
-            isDirty: false,
+            draftProfile: hasDraft ? draftProfile : profile,
+            isDirty: !!hasDraft,
           });
         }
       },
@@ -82,10 +78,13 @@ export const useEditorStore = create<EditorState>()(
       },
     }),
     {
-      name: "ohmylink-editor-draft",
+      name: "dzenn-editor-draft",
       partialize: (state) => ({
         draftProfile: state.draftProfile,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );
