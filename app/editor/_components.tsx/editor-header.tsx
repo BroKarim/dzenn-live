@@ -9,7 +9,7 @@ import { ProfileEditorData } from "@/server/user/profile/payloads";
 import { useEditorStore } from "@/lib/stores/editor-store";
 import { useTransition } from "react";
 import { updateProfile, updateBackground, updateBackgroundEffects, updateBackgroundPattern, updateCardTexture } from "@/server/user/profile/actions";
-import { updateLink, deleteLink, reorderLinks } from "@/server/user/links/actions";
+import { createLink, updateLink, deleteLink, reorderLinks, createSocialLink, updateSocialLink, deleteSocialLink } from "@/server/user/links/actions";
 import { toast } from "sonner";
 
 interface EditorHeaderProps {
@@ -85,20 +85,50 @@ export default function EditorHeader({ profile }: EditorHeaderProps) {
           updates.push(deleteLink(link.id));
         }
 
-        // 2. Find updated links (content change)
+        // 2. Find updated or new links
         for (const draftLink of draftLinks) {
-          const originalLink = originalLinks.find((l) => l.id === draftLink.id);
-          if (originalLink && JSON.stringify(draftLink) !== JSON.stringify(originalLink)) {
+          if (String(draftLink.id).startsWith("temp-")) {
             const { id, ...linkData } = draftLink;
-            updates.push(updateLink(id, linkData as any));
+            updates.push(createLink(linkData as any));
+          } else {
+            const originalLink = originalLinks.find((l) => l.id === draftLink.id);
+            if (originalLink && JSON.stringify(draftLink) !== JSON.stringify(originalLink)) {
+              const { id, ...linkData } = draftLink;
+              updates.push(updateLink(id, linkData as any));
+            }
           }
         }
 
-        // 3. Reordering (if the order of IDs changed)
+        // 3. Reordering
         const originalOrder = originalLinks.map((l) => l.id).join(",");
         const draftOrder = draftLinks.map((l) => l.id).join(",");
-        if (originalOrder !== draftOrder) {
+        if (originalOrder !== draftOrder && !draftLinks.some((l) => String(l.id).startsWith("temp-"))) {
           updates.push(reorderLinks(draftLinks.map((l) => l.id)));
+        }
+
+        // Socials Logic
+        const originalSocials = originalProfile?.socials || [];
+        const draftSocials = draftProfile.socials || [];
+
+        // 1. Find deleted socials
+        const draftSocialIds = new Set(draftSocials.map((s) => s.id));
+        const deletedSocials = originalSocials.filter((s) => !draftSocialIds.has(s.id));
+        for (const social of deletedSocials) {
+          updates.push(deleteSocialLink(social.id));
+        }
+
+        // 2. Find updated or new socials
+        for (const draftSocial of draftSocials) {
+          if (String(draftSocial.id).startsWith("temp-")) {
+            const { id, ...socialData } = draftSocial;
+            updates.push(createSocialLink(socialData as any));
+          } else {
+            const originalSocial = originalSocials.find((s) => s.id === draftSocial.id);
+            if (originalSocial && JSON.stringify(draftSocial) !== JSON.stringify(originalSocial)) {
+              const { id, ...socialData } = draftSocial;
+              updates.push(updateSocialLink(id, socialData as any));
+            }
+          }
         }
 
         const results = await Promise.all(updates);

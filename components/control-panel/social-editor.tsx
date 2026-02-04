@@ -24,8 +24,6 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
   const [selectedPlatform, setSelectedPlatform] = useState<string>("");
   const [url, setUrl] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-
   const resetForm = () => {
     setEditingId(null);
     setSelectedPlatform("");
@@ -41,62 +39,32 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
     setIsOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!selectedPlatform) return;
 
-    setIsSaving(true);
-    try {
-      if (editingId) {
-        const result = await updateSocialLink(editingId, {
-          platform: selectedPlatform,
-          url,
-          position: profile.socials.findIndex((s) => s.id === editingId),
-        });
-
-        if (result.success) {
-          const updatedSocials = profile.socials.map((s) => (s.id === editingId ? { ...s, platform: selectedPlatform, url } : s));
-          onUpdate({ ...profile, socials: updatedSocials });
-          toast.success("Social link updated!");
-        } else {
-          toast.error(result.error || "Failed to update");
-        }
-      } else {
-        const result = await createSocialLink({
-          platform: selectedPlatform,
-          url,
-          position: profile.socials.length,
-        });
-
-        if (result.success && result.data) {
-          onUpdate({ ...profile, socials: [...profile.socials, result.data] });
-          toast.success("Social link added!");
-        } else {
-          toast.error(result.error || "Failed to add");
-        }
-      }
-      resetForm();
-    } catch (error) {
-      console.error(error);
-      toast.error("Error saving social link");
-    } finally {
-      setIsSaving(false);
+    if (editingId) {
+      const updatedSocials = profile.socials.map((s) => (s.id === editingId ? { ...s, platform: selectedPlatform, url } : s));
+      onUpdate({ ...profile, socials: updatedSocials });
+      toast.success("Changes applied to preview");
+    } else {
+      const newSocial = {
+        id: `temp-${Date.now()}`,
+        platform: selectedPlatform,
+        url,
+        position: profile.socials.length,
+      };
+      onUpdate({ ...profile, socials: [...profile.socials, newSocial as any] });
+      toast.success("Added to preview");
     }
+    resetForm();
   };
 
-  const removeSocial = async (id: string) => {
-    try {
-      const result = await deleteSocialLink(id);
-
-      if (result.success) {
-        onUpdate({ ...profile, socials: profile.socials.filter((s) => s.id !== id) });
-        toast.success("Social link removed!");
-      } else {
-        toast.error(result.error || "Failed to delete");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Error deleting social link");
-    }
+  const removeSocial = (id: string) => {
+    onUpdate({
+      ...profile,
+      socials: profile.socials.filter((s) => s.id !== id),
+    });
+    toast.success("Social link removed from preview");
   };
 
   const filteredPlatforms = SOCIAL_PLATFORMS.filter((p) => p.label.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -159,11 +127,10 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" type="button" onClick={resetForm} disabled={isSaving}>
+            <Button variant="ghost" type="button" onClick={resetForm}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!selectedPlatform || isSaving}>
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+            <Button onClick={handleSave} disabled={!selectedPlatform}>
               {editingId ? "Update Link" : "Add to Profile"}
             </Button>
           </DialogFooter>

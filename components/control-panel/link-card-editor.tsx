@@ -7,7 +7,7 @@ import { Plus, Trash2, Link as LinkIcon, CreditCard, Image as ImageIcon, Loader2
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
-import { createLink, deleteLink, uploadMedia, reorderLinks } from "@/server/user/links/actions";
+import { createLink, uploadMedia } from "@/server/user/links/actions";
 import { LinkEditDialog } from "./link-edit-dialog";
 import { toast } from "sonner";
 import { Button2 } from "@/components/ui/button-2";
@@ -127,6 +127,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
   const handleAdd = async () => {
     const payload = {
+      id: `temp-${Date.now()}`,
       title: newLink.title,
       url: newLink.url.trim(),
       description: newLink.description || null,
@@ -137,10 +138,11 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       paymentAccountId: newLink.paymentAccountId || null,
       position: profile.links.length,
       isActive: true,
-    };
+    } as any;
 
     const { LinkSchema } = await import("@/server/user/links/schema");
-    const validation = LinkSchema.safeParse(payload);
+    const { id, ...validationPayload } = payload;
+    const validation = LinkSchema.safeParse(validationPayload);
 
     if (!validation.success) {
       const firstError = validation.error.issues[0];
@@ -148,22 +150,9 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       return;
     }
 
-    setIsSaving(true);
-    try {
-      const result = await createLink(payload);
-
-      if (result.success && result.data) {
-        onUpdate({ ...profile, links: [...profile.links, result.data as any] });
-        toast.success("Link added!");
-        resetForm();
-      } else {
-        toast.error(result.error || "Failed to add link");
-      }
-    } catch (error) {
-      toast.error("Error adding link");
-    } finally {
-      setIsSaving(false);
-    }
+    onUpdate({ ...profile, links: [...profile.links, payload] });
+    toast.success("Link added to preview");
+    resetForm();
   };
 
   const handleDelete = (id: string) => {
