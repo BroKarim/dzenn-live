@@ -1,8 +1,16 @@
-import type { ProfileEditorData } from "@/server/user/profile/payloads";
 import { PatternRenderer } from "./pattern-renderer";
 
 interface PreviewBackgroundProps {
-  profile: ProfileEditorData;
+  profile: {
+    bgType: string;
+    bgColor: string;
+    bgGradientFrom: string | null;
+    bgGradientTo: string | null;
+    bgWallpaper: string | null;
+    bgImage: string | null;
+    bgEffects: any;
+    bgPattern: any;
+  };
 }
 
 export function PreviewBackground({ profile }: PreviewBackgroundProps) {

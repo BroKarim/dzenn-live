@@ -6,7 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 import Image from "next/image";
 
 interface CallbackClientProps {
-  redirectTo: "/dashboard" | "/onboarding/username" | "/login";
+  redirectTo: string;
 }
 
 export function CallbackClient({ redirectTo }: CallbackClientProps) {
@@ -15,6 +15,19 @@ export function CallbackClient({ redirectTo }: CallbackClientProps) {
   useEffect(() => {
     router.replace(redirectTo);
   }, [router, redirectTo]);
+
+  const getMessage = () => {
+    if (redirectTo.startsWith("/editor")) {
+      return "Taking you to your editor";
+    }
+    if (redirectTo === "/onboarding/username") {
+      return "Setting up your profile";
+    }
+    if (redirectTo === "/login") {
+      return "Redirecting to login";
+    }
+    return "Redirecting...";
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-100">
@@ -25,35 +38,19 @@ export function CallbackClient({ redirectTo }: CallbackClientProps) {
               <div className="h-16 w-16 rounded-full bg-zinc-200 animate-pulse"></div>
             </div>
             <div className="relative flex items-center justify-center">
-              <Image
-                src="/logo.png"
-                alt="OneURL"
-                width={64}
-                height={64}
-                className="h-16 w-16"
-                priority
-              />
+              <Image src="/logo.png" alt="OneURL" width={64} height={64} className="h-16 w-16" priority />
             </div>
           </div>
         </div>
-        
+
         <div className="space-y-3">
           <div className="flex items-center justify-center gap-2">
             <Spinner className="h-5 w-5 text-zinc-900" />
-            <p className="text-sm font-medium text-zinc-900">
-              Redirecting...
-            </p>
+            <p className="text-sm font-medium text-zinc-900">Redirecting...</p>
           </div>
-          <p className="text-xs text-zinc-500">
-            {redirectTo === "/dashboard" 
-              ? "Taking you to your dashboard" 
-              : redirectTo === "/onboarding/username"
-              ? "Setting up your profile"
-              : "Redirecting to login"}
-          </p>
+          <p className="text-xs text-zinc-500">{getMessage()}</p>
         </div>
       </div>
     </div>
   );
 }
-

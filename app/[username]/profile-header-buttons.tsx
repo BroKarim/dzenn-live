@@ -20,19 +20,25 @@ export function ProfileHeaderButtons({ name, username, avatarUrl }: ProfileHeade
   return (
     <>
       <TooltipProvider>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link href="/" className="flex h-10 w-10 items-center justify-center rounded-full hover:opacity-80 transition-opacity" aria-label="Go to OneURL homepage">
-                <Image src="/logo.png" alt="OneURL" width={40} height={40} className="h-10 w-10" priority />
+              <Link href="/" className="font-bold text-xl tracking-tighter hover:opacity-80 transition-opacity flex items-center gap-1">
+                <span className="text-white">oh</span>
+                <span className="text-primary text-2xl">!</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent>Go to OneURL homepage</TooltipContent>
+            <TooltipContent>Go to home</TooltipContent>
           </Tooltip>
+
           <Tooltip>
             <TooltipTrigger asChild>
-              <button onClick={() => setShareDialogOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-full hover:opacity-80 transition-opacity" aria-label="Share profile">
-                <Share2 className="h-5 w-5" />
+              <button
+                onClick={() => setShareDialogOpen(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-white border border-white/10 hover:bg-white/20 transition-all shadow-xl"
+                aria-label="Share profile"
+              >
+                <Share2 className="h-4 w-4" />
               </button>
             </TooltipTrigger>
             <TooltipContent>Share profile</TooltipContent>

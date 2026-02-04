@@ -1,198 +1,39 @@
-import { notFound } from "next/navigation";
-import { Link2, BadgeCheck } from "lucide-react";
-import { profileService } from "@/lib/services/profile.service";
+import { getPublicProfile } from "@/server/website/profile";
 import type { Metadata } from "next";
-import Image from "next/image";
-import { Empty, EmptyIcon, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { getAvatarUrl } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ProfileHeaderButtons } from "./profile-header-buttons";
-import { TrackedIconLinksList } from "@/components/tracked-icon-links-list";
-import { TrackedMainLinksList } from "@/components/tracked-main-links-list";
-import { Suspense } from "react";
+import { ProfileView } from "./profile-view";
+import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ username: string }>;
 };
 
+// Metadata generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
-  const user = await profileService.getByUsername(username);
-
-  if (!user || !user.profile?.isPublished) {
-    return {
-      title: "Profile Not Found",
-    };
-  }
-
-  const avatarUrl = getAvatarUrl(user);
-  const profileUrl = `https://dzenn.link/${username}`;
-  const images = avatarUrl ? [{ url: avatarUrl, width: 400, height: 400, alt: `${user.name}'s profile picture` }] : [{ url: "/og.png", width: 1200, height: 630, alt: "OneURL" }];
 
   return {
-    title: `${user.name} | Dzenn`,
-    description: user.profile?.bio || `Visit ${user.name}'s profile on Dzenn`,
-    metadataBase: new URL("https://dzenn.link"),
-    openGraph: {
-      title: `${user.name} | Dzenn`,
-      description: user.profile?.bio || `Visit ${user.name}'s profile on Dzenn`,
-      url: profileUrl,
-      siteName: "Dzenn",
-      images,
-      locale: "en_US",
-      type: "profile",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${user.name} | OneURL`,
-      description: user.profile?.bio || `Visit ${user.name}'s profile on OneURL`,
-      images: images.map((img) => img.url),
-    },
-    alternates: {
-      canonical: profileUrl,
-    },
+    title: `@${username} | OneLink`,
+    description: `Visit ${username}'s profile on OneLink`,
   };
 }
 
-function parseBioWithCode(bio: string) {
-  const parts: (string | React.ReactElement)[] = [];
-  const regex = /`([^`]+)`/g;
-  let lastIndex = 0;
-  let match;
-  let key = 0;
+/**
+ * Public profile page
+ * Uses simple server-side rendering with data fetching
+ */
+export default async function PublicProfilePage({ params }: Props) {
+  const { username } = await params;
 
-  while ((match = regex.exec(bio)) !== null) {
-    if (match.index > lastIndex) {
-      const text = bio.slice(lastIndex, match.index);
-      const lines = text.split("\n");
-      lines.forEach((line, idx) => {
-        if (idx > 0) {
-          parts.push(<br key={`br-${key++}`} />);
-        }
-        if (line) {
-          parts.push(line);
-        }
-      });
-    }
-    parts.push(
-      <code key={key++} className="border border-zinc-300 bg-white text-[#00BA7C] px-1.5 py-0.5 rounded-sm text-xs font-mono break-all">
-        {match[1]}
-      </code>,
-    );
-    lastIndex = regex.lastIndex;
-  }
+  // Fetch user profile
+  const user = await getPublicProfile(username);
 
-  if (lastIndex < bio.length) {
-    const text = bio.slice(lastIndex);
-    const lines = text.split("\n");
-    lines.forEach((line, idx) => {
-      if (idx > 0) {
-        parts.push(<br key={`br-${key++}`} />);
-      }
-      if (line) {
-        parts.push(line);
-      }
-    });
-  }
-
-  return parts.length > 0 ? parts : [bio];
-}
-
-async function ProfileContent({ username }: { username: string }) {
-  const user = await profileService.getByUsername(username);
-
+  // Handle not found
   if (!user || !user.profile?.isPublished) {
     notFound();
   }
 
-  const links = user.profile.links.filter((link) => link.isActive);
-  const iconLinks = links.filter((link) => link.icon);
-  const regularLinks = links.filter((link) => !link.icon);
-
-  const avatarUrl = getAvatarUrl(user);
-
-  return (
-    <div className="min-h-screen bg-zinc-100">
-      <div className="mx-auto w-full max-w-lg px-4 sm:px-6 lg:px-8 flex flex-col min-h-screen py-20">
-        <main className="font-mono text-sm relative">
-          <ProfileHeaderButtons name={user.name} username={user.username} avatarUrl={avatarUrl} />
-          <section className="relative">
-            <div className="flex items-center gap-3 mb-6">
-              {avatarUrl && (
-                <div className="size-14 rounded-full overflow-hidden bg-gray-200 shrink-0">
-                  <Image src={avatarUrl} alt={user.name} width={64} height={64} className="w-full h-full object-cover select-none" draggable={false} priority />
-                </div>
-              )}
-              <div className="relative rounded-md transition-all border border-transparent">
-                <h1 className="text-sm font-medium flex items-center gap-0.5">
-                  <span>{user.name}</span>
-                  <BadgeCheck className="size-5 text-white [&>path:first-child]:fill-amber-500" />
-                </h1>
-                {user.username && <div className="text-xs text-zinc-500 mt-0.5">@{user.username}</div>}
-                {user.profile?.displayName && (
-                  <div className="flex items-center gap-1 text-xs">
-                    <span>{user.profile.displayName}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {user.profile?.bio && (
-              <div className="relative rounded-md transition-all mb-6 border border-transparent">
-                <div className="wrap-break-word overflow-wrap-anywhere text-sm mx-auto leading-relaxed">
-                  <div className="mt-1 mb-1 wrap-break-word overflow-wrap-anywhere">{parseBioWithCode(user.profile.bio)}</div>
-                </div>
-              </div>
-            )}
-
-            {iconLinks.length > 0 && (
-              <div className="mb-6">
-                <TrackedIconLinksList links={iconLinks} />
-              </div>
-            )}
-          </section>
-
-          {regularLinks.length > 0 && (
-            <>
-              <hr className="h-px bg-transparent border-t-2 border-dashed border-zinc-200 my-6" />
-              <TrackedMainLinksList links={regularLinks} />
-            </>
-          )}
-
-          {regularLinks.length === 0 && iconLinks.length === 0 && links.length === 0 && (
-            <div className="py-8 flex-1 flex items-center justify-center">
-              <Empty>
-                <EmptyIcon>
-                  <Link2 className="h-10 w-10 text-muted-foreground/50" />
-                </EmptyIcon>
-                <EmptyTitle>No links yet</EmptyTitle>
-                <EmptyDescription>Check back later for updates.</EmptyDescription>
-              </Empty>
-            </div>
-          )}
-
-          <hr className="h-px bg-transparent border-t-2 border-dashed border-zinc-200 my-6" />
-        </main>
-
-        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
-          <Link href="/signup">
-            <Button variant="secondary" className="rounded-full px-4 py-2 h-9 sm:px-8 sm:h-12 text-xs sm:text-sm font-medium shadow-sm hover:shadow transition-all bg-secondary/50 hover:bg-secondary/80 border-transparent">
-              Join {username || "OneURL"} on OneURL
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default async function PublicProfilePage({ params }: Props) {
-  const { username } = await params;
-
-  return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-      <ProfileContent username={username} />
-    </Suspense>
-  );
+  // Render profile
+  return <ProfileView user={user} />;
 }

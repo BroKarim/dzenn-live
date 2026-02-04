@@ -1,10 +1,14 @@
 import React from "react";
 import { Globe } from "lucide-react";
 import { SOCIAL_PLATFORMS } from "@/lib/sosmed";
-import type { ProfileEditorData } from "@/server/user/profile/payloads";
-
 interface PreviewSocialsProps {
-  profile: ProfileEditorData;
+  profile: {
+    socials: {
+      id: string;
+      platform: string;
+      url: string;
+    }[];
+  };
 }
 
 export function PreviewSocials({ profile }: PreviewSocialsProps) {
@@ -23,7 +27,7 @@ export function PreviewSocials({ profile }: PreviewSocialsProps) {
               href={social.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-transform hover:scale-110 active:scale-95 border border-white/10"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-transform hover:scale-110 active:scale-95 border border-white/10"
             >
               <Icon className="h-5 w-5" />
             </a>

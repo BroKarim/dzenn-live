@@ -34,10 +34,10 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    useCache: true,
     serverActions: {
-      bodySizeLimit: "2mb", 
+      bodySizeLimit: "2mb",
     },
-    cacheComponents: true,
   },
 };
 

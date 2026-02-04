@@ -1,12 +1,15 @@
 import React from "react";
 import { TexturedCard } from "@/components/texture-card";
-import type { ProfileEditorData } from "@/server/user/profile/payloads";
 
 interface PreviewLinksProps {
-  profile: ProfileEditorData;
+  profile: {
+    links: any[];
+    cardTexture: "base" | "glassy";
+  };
+  renderLink?: (link: any, children: React.ReactNode) => React.ReactNode;
 }
 
-export function PreviewLinks({ profile }: PreviewLinksProps) {
+export function PreviewLinks({ profile, renderLink }: PreviewLinksProps) {
   const { links, cardTexture } = profile;
 
   // Sort links by position for correct display order
@@ -15,21 +18,29 @@ export function PreviewLinks({ profile }: PreviewLinksProps) {
   return (
     <div className="w-full space-y-4">
       {sortedLinks.length > 0 ? (
-        sortedLinks.map((link) => (
-          <TexturedCard
-            key={link.id}
-            title={link.title.toUpperCase()}
-            url={link.url}
-            description={link.description ?? undefined}
-            icon={link.icon ?? undefined}
-            imageUrl={link.mediaType === "image" ? (link.mediaUrl ?? undefined) : undefined}
-            videoUrl={link.mediaType === "video" ? (link.mediaUrl ?? undefined) : undefined}
-            isStripeEnabled={!!link.paymentProvider}
-            backgroundColor="bg-[#222]"
-            titleColor="text-white"
-            texture={cardTexture}
-          />
-        ))
+        sortedLinks.map((link) => {
+          const card = (
+            <TexturedCard
+              key={link.id}
+              title={link.title.toUpperCase()}
+              url={link.url}
+              description={link.description ?? undefined}
+              icon={link.icon ?? undefined}
+              imageUrl={link.mediaType === "image" ? (link.mediaUrl ?? undefined) : undefined}
+              videoUrl={link.mediaType === "video" ? (link.mediaUrl ?? undefined) : undefined}
+              isStripeEnabled={!!link.paymentProvider}
+              backgroundColor="bg-[#222]"
+              titleColor="text-white"
+              texture={cardTexture}
+            />
+          );
+
+          if (renderLink) {
+            return <React.Fragment key={link.id}>{renderLink(link, card)}</React.Fragment>;
+          }
+
+          return card;
+        })
       ) : (
         <TexturedCard title="ADD YOUR FIRST LINK" backgroundColor="" titleColor="text-white" texture={cardTexture} />
       )}
