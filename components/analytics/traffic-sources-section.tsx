@@ -48,7 +48,7 @@ export function TrafficSourcesSection({ referrers = [], utmSources = [], utmMedi
     const total = totalForShare(data);
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-1">
         {data.map((item) => {
           const share = getShare(item.clicks, total);
           const label = getLabel(item);
@@ -56,14 +56,14 @@ export function TrafficSourcesSection({ referrers = [], utmSources = [], utmMedi
           const ReferrerIcon = item.referrer ? getReferrerIcon(item.referrer) : null;
 
           return (
-            <div key={label} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+            <div key={label} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                {IconComponent || (ReferrerIcon && <ReferrerIcon className="h-4 w-4" />)}
-                <span className="text-sm font-medium truncate">{label}</span>
+                {IconComponent || (ReferrerIcon && <ReferrerIcon className="h-3.5 w-3.5 opacity-70" />)}
+                <span className="text-xs font-medium truncate">{label}</span>
               </div>
-              <div className="flex items-center gap-4 ml-4">
-                <span className="text-sm text-muted-foreground">{item.clicks}</span>
-                <span className="text-sm font-medium w-16 text-right">{share}%</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] font-bold text-muted-foreground">{item.clicks}</span>
+                <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-md min-w-[35px] text-center">{share}%</span>
               </div>
             </div>
           );
@@ -73,34 +73,44 @@ export function TrafficSourcesSection({ referrers = [], utmSources = [], utmMedi
   };
 
   return (
-    <Card className="rounded-none">
-      <CardHeader>
-        <CardTitle>Traffic Sources</CardTitle>
+    <Card className="rounded-xl border-white/5 bg-white/5 shadow-none">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-sm font-semibold">Traffic Sources</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 text-xs sm:text-sm">
-            <TabsTrigger value="referrers">Referrers ({referrers.length})</TabsTrigger>
-            <TabsTrigger value="utm-sources">UTM Sources ({utmSources.length})</TabsTrigger>
-            <TabsTrigger value="utm-mediums">UTM Mediums ({utmMediums.length})</TabsTrigger>
-            <TabsTrigger value="utm-campaigns">UTM Campaigns ({utmCampaigns.length})</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 text-[10px] h-auto p-1 bg-white/5">
+            <TabsTrigger value="referrers" className="py-1 px-2 h-7">
+              Referrers
+            </TabsTrigger>
+            <TabsTrigger value="utm-sources" className="py-1 px-2 h-7">
+              UTM Sources
+            </TabsTrigger>
+            <TabsTrigger value="utm-mediums" className="py-1 px-2 h-7">
+              UTM Mediums
+            </TabsTrigger>
+            <TabsTrigger value="utm-campaigns" className="py-1 px-2 h-7">
+              UTM Campaigns
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="referrers" className="mt-4">
-            {renderList(referrers, (item) => item.referrer || "Unknown")}
-          </TabsContent>
+          <div className="mt-4">
+            <TabsContent value="referrers" className="m-0">
+              {renderList(referrers, (item) => item.referrer || "Unknown")}
+            </TabsContent>
 
-          <TabsContent value="utm-sources" className="mt-4">
-            {renderList(utmSources, (item) => item.source || "Unknown")}
-          </TabsContent>
+            <TabsContent value="utm-sources" className="m-0">
+              {renderList(utmSources, (item) => item.source || "Unknown")}
+            </TabsContent>
 
-          <TabsContent value="utm-mediums" className="mt-4">
-            {renderList(utmMediums, (item) => item.medium || "Unknown")}
-          </TabsContent>
+            <TabsContent value="utm-mediums" className="m-0">
+              {renderList(utmMediums, (item) => item.medium || "Unknown")}
+            </TabsContent>
 
-          <TabsContent value="utm-campaigns" className="mt-4">
-            {renderList(utmCampaigns, (item) => item.campaign || "Unknown")}
-          </TabsContent>
+            <TabsContent value="utm-campaigns" className="m-0">
+              {renderList(utmCampaigns, (item) => item.campaign || "Unknown")}
+            </TabsContent>
+          </div>
         </Tabs>
       </CardContent>
     </Card>

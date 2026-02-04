@@ -41,39 +41,31 @@ export function DeviceBreakdown({ data }: DeviceBreakdownProps) {
   const sortedData = [...data].sort((a, b) => b.value - a.value);
 
   return (
-    <Card className="rounded-none">
-      <CardHeader>
-        <CardTitle>Devices</CardTitle>
-        <CardDescription>Device breakdown</CardDescription>
+    <Card className="rounded-xl border-white/5 bg-white/5 shadow-none overflow-hidden">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-sm font-semibold">Devices</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-0 overflow-x-auto">
-          <div className="grid grid-cols-[1fr_60px_60px] sm:grid-cols-[1fr_80px_80px] gap-2 sm:gap-4 px-2 py-2 text-xs font-medium text-muted-foreground border-b mb-2 min-w-[280px]">
-            <div>DEVICE TYPE</div>
-            <div className="text-right">VISITORS</div>
-            <div className="text-right">SHARE</div>
+      <CardContent className="p-3 pt-0">
+        <div className="space-y-1">
+          <div className="grid grid-cols-[1fr_50px_60px] gap-2 px-2 py-2 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider border-b border-white/5 mb-1">
+            <div>Device</div>
+            <div className="text-right">Clicks</div>
+            <div className="text-right">Share</div>
           </div>
           {sortedData.map((item) => {
             const DeviceIcon = getDeviceIcon(item.name);
             const share = getShare(item.value, total);
-            const colors = getDeviceColor(item.name);
-            
+            // const colors = getDeviceColor(item.name);
+
             return (
-              <div
-                key={item.name}
-                className={`grid grid-cols-[1fr_60px_60px] sm:grid-cols-[1fr_80px_80px] gap-2 sm:gap-4 items-center px-2 py-2 sm:py-3 rounded-lg ${colors.bg} transition-colors min-w-[280px]`}
-              >
+              <div key={item.name} className="grid grid-cols-[1fr_50px_60px] gap-2 items-center px-2 py-2 rounded-lg hover:bg-white/5 transition-colors">
                 <div className="flex items-center gap-2 min-w-0">
-                  <DeviceIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-                  <span className="text-xs sm:text-sm font-medium truncate">{item.name}</span>
+                  <DeviceIcon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                  <span className="text-xs font-medium truncate">{item.name}</span>
                 </div>
-                <div className="text-xs sm:text-sm font-medium text-right">
-                  {item.value.toLocaleString()}
-                </div>
+                <div className="text-[11px] font-bold text-right text-muted-foreground">{item.value.toLocaleString()}</div>
                 <div className="text-right">
-                  <span className={`inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium text-white ${colors.badge}`}>
-                    {share}%
-                  </span>
+                  <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-md min-w-[35px] inline-block text-center">{share}%</span>
                 </div>
               </div>
             );
@@ -83,4 +75,3 @@ export function DeviceBreakdown({ data }: DeviceBreakdownProps) {
     </Card>
   );
 }
-

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export function SettingsTab() {
   return (
-    <Card className="bg-card">
+    <Card className="border-none">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Settings className="h-4 w-4" />

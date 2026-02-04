@@ -89,7 +89,6 @@ export function AnalyticsTab({ profileId, links }: AnalyticsTabProps) {
     queryKey: ["analytics", selectedLinkId],
     queryFn: async () => {
       if (selectedLinkId) {
-        // Get link-specific analytics
         const result = await getLinkAnalyticsAction({
           linkId: selectedLinkId,
         });
@@ -228,7 +227,7 @@ export function AnalyticsTab({ profileId, links }: AnalyticsTabProps) {
 
   return (
     <TooltipProvider>
-      <div className="space-y-4">
+      <div className="space-y-4 px-2 md:pb-1">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex-1 w-full sm:max-w-sm">
             <Select value={selectedLinkId || "all"} onValueChange={(value) => setSelectedLinkId(value === "all" ? null : value)}>
@@ -258,25 +257,27 @@ export function AnalyticsTab({ profileId, links }: AnalyticsTabProps) {
         </div>
 
         {!selectedLinkId ? (
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 grid-cols-2">
             <MetricCard title="Total Clicks" value={formatNumber(totalClicks)} icon={MousePointerClick} iconColor="text-blue-500" />
             <MetricCard title="Unique Visitors" value={formatNumber(uniqueVisitors)} icon={Users} iconColor="text-emerald-500" />
-            <MetricCard title="Avg. Clicks/Visitor" value={avgClicksPerVisitor} icon={TrendingUp} iconColor="text-purple-500" />
+            <MetricCard title="Avg. Clicks/Vis" value={avgClicksPerVisitor} icon={TrendingUp} iconColor="text-purple-500" />
             <MetricCard title="Active Links" value={links.filter((l) => l.isActive !== false).length.toString()} icon={Globe} iconColor="text-amber-500" />
           </div>
         ) : (
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-2 grid-cols-2">
             <MetricCard title="Pageviews" value={formatNumber(totalClicks)} change={clicksChange} icon={Eye} iconColor="text-blue-500" />
             <MetricCard title="Sessions" value={formatNumber(sessions)} change={sessionsChange} icon={Activity} iconColor="text-emerald-500" />
             <MetricCard title="Visitors" value={formatNumber(uniqueVisitors)} change={visitorsChange} icon={User} iconColor="text-purple-500" />
             <MetricCard title="Bounce Rate" value={`${bounceRate.toFixed(1)}%`} change={bounceRateChange} icon={BarChart3} iconColor="text-amber-500" isPositive={(c) => c <= 0} />
-            <MetricCard title="Session Duration" value={formatDuration(avgSessionDuration)} change={sessionDurationChange} icon={Clock} iconColor="text-indigo-500" />
+            <div className="col-span-2">
+              <MetricCard title="Session Duration" value={formatDuration(avgSessionDuration)} change={sessionDurationChange} icon={Clock} iconColor="text-indigo-500" />
+            </div>
           </div>
         )}
 
         <TrafficTrendsChart data={clicksOverTimeData} isLoading={isLoadingStats} showMultipleLines={!!selectedLinkId} />
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="flex flex-col gap-4">
           <TrafficSourcesSection
             referrers={referrerData.map((item) => ({ referrer: item.referrer, clicks: item.clicks }))}
             utmSources={utmSourceData.map((item) => ({ source: item.source, clicks: item.clicks }))}
@@ -302,55 +303,51 @@ export function AnalyticsTab({ profileId, links }: AnalyticsTabProps) {
           )}
 
           {!selectedLinkId && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Pages</CardTitle>
+            <Card className="rounded-xl border-white/5 bg-white/5 shadow-none">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm font-semibold">Top Links</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-2 pt-0">
                 {topLinksWithDetails.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {topLinksWithDetails.slice(0, 10).map((item: { link_id: string; title: string; url: string; clicks: number }) => {
                       const total = totalForShare(topLinksWithDetails);
                       const share = getShare(item.clicks, total);
                       return (
-                        <div key={item.link_id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => setSelectedLinkId(item.link_id)}>
-                          <div className="flex-1 min-w-0">
+                        <div key={item.link_id} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors" onClick={() => setSelectedLinkId(item.link_id)}>
+                          <div className="flex-1 min-w-0 mr-4">
                             <p className="text-sm font-medium truncate">{item.title}</p>
-                            <p className="text-xs text-muted-foreground truncate">{item.url}</p>
+                            <p className="text-[10px] text-muted-foreground truncate opacity-70">{item.url}</p>
                           </div>
-                          <div className="flex items-center gap-4 ml-4">
-                            <span className="text-sm text-muted-foreground">{item.clicks}</span>
-                            <span className="text-sm font-medium w-16 text-right">{share}%</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[11px] font-bold">{item.clicks}</span>
+                            <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-md min-w-[35px] text-center">{share}%</span>
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <Empty>
+                  <Empty className="py-8">
                     <EmptyIcon>
-                      <Globe />
+                      <Globe className="h-8 w-8 opacity-20" />
                     </EmptyIcon>
-                    <EmptyTitle>No data yet</EmptyTitle>
+                    <EmptyTitle className="text-sm">No data yet</EmptyTitle>
                   </Empty>
                 )}
               </CardContent>
             </Card>
           )}
-        </div>
 
-        {selectedLinkId && (
-          <>
-            <div className="grid gap-4 md:grid-cols-2">
+          {selectedLinkId && (
+            <div className="flex flex-col gap-4">
               <DeviceBreakdown data={deviceData} />
               <BrowserBreakdown data={browserData} />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
               <OSBreakdown data={osData} />
               <VisitorLocations data={countryData} />
             </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </TooltipProvider>
   );

@@ -11,42 +11,28 @@ interface MetricCardProps {
   isPositive?: (change: number) => boolean;
 }
 
-export function MetricCard({
-  title,
-  value,
-  change,
-  icon: Icon,
-  iconColor,
-  isPositive = (c) => c >= 0,
-}: MetricCardProps) {
+export function MetricCard({ title, value, change, icon: Icon, iconColor, isPositive = (c) => c >= 0 }: MetricCardProps) {
   const showChange = change !== undefined;
   const positive = showChange ? isPositive(change) : true;
   const changeValue = showChange ? Math.abs(change) : 0;
 
   return (
-    <Card className="rounded-none">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <Icon className={`h-4 w-4 ${iconColor}`} />
+    <Card className="rounded-xl border-white/5 bg-white/5 shadow-none">
+      <CardHeader className="p-3 pb-1">
+        <CardTitle className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground flex items-center gap-1.5">
+          <Icon className={`h-3 w-3 ${iconColor}`} />
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <p className="text-3xl font-bold mb-2">{value}</p>
+      <CardContent className="p-3 pt-0">
+        <p className="text-xl font-bold">{value}</p>
         {showChange && (
-          <div className="flex items-center gap-1.5">
-            {positive ? (
-              <ArrowUp className="h-3.5 w-3.5 text-emerald-600" />
-            ) : (
-              <ArrowDown className="h-3.5 w-3.5 text-red-600" />
-            )}
-            <span className={`text-sm font-semibold ${positive ? "text-emerald-600" : "text-red-600"}`}>
-              {changeValue.toFixed(0)}%
-            </span>
+          <div className="flex items-center gap-1 mt-0.5">
+            {positive ? <ArrowUp className="h-3 w-3 text-emerald-500" /> : <ArrowDown className="h-3 w-3 text-red-500" />}
+            <span className={`text-[10px] font-medium ${positive ? "text-emerald-500" : "text-red-500"}`}>{changeValue.toFixed(0)}%</span>
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
-
