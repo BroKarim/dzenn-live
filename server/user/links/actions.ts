@@ -20,7 +20,7 @@ export async function createSocialLink(data: SocialLinkInput) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const profile = await db.profile.findUnique({
+    const profile = await db.profile.findFirst({
       where: { userId: session.user.id },
       select: { id: true },
     });
@@ -111,7 +111,7 @@ export async function createLink(data: LinkInput) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const profile = await db.profile.findUnique({
+    const profile = await db.profile.findFirst({
       where: { userId: session.user.id },
       select: { id: true },
     });

@@ -14,20 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OneURL - One URL for all your links",
-  description: "Create a beautiful profile page to share all your important links in one place. Open source alternative to Linktree.",
-  metadataBase: new URL("https://oneurl-lake.vercel.app"),
+  title: "Dzenn - Not your ordinary linktree",
+  description: "A nonchalant link-in-bio that hits different. No cap, just vibes. Your main character era starts here – slay your links, bestie. 💅✨",
   openGraph: {
-    title: "OneURL - One URL for all your links",
-    description: "Create a beautiful profile page to share all your important links in one place. Open source alternative to Linktree.",
-    url: "https://oneurl-lake.vercel.app",
-    siteName: "OneURL",
+    title: "Dzenn - Not your ordinary linktree",
+    description: "A nonchalant link-in-bio that hits different. No cap, just vibes. Your main character era starts here – slay your links, bestie. 💅✨",
+    siteName: "Dzenn",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "OneURL - One URL for all your links",
+        alt: "Dzenn - Not your ordinary linktree",
       },
     ],
     locale: "en_US",
@@ -35,8 +33,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "OneURL - One URL for all your links",
-    description: "Create a beautiful profile page to share all your important links in one place. Open source alternative to Linktree.",
+    title: "Dzenn - Not your ordinary linktree",
+    description: "A nonchalant link-in-bio that hits different. No cap, just vibes. Your main character era starts here – slay your links, bestie.",
     images: ["/og.png"],
   },
   robots: {
@@ -59,10 +57,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script defer src="https://cloud.umami.is/script.js" data-website-id="cbee05df-c4b6-4d87-af81-25cdd6b7bf4f"></script>
-        <meta name="google-site-verification" content="i_NBx9CVW6gyP0Bs6b5pqNyGqyOZdJ0P3GBJxpBGe8s" />
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>

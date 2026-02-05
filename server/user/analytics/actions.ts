@@ -72,7 +72,7 @@ export async function getProfileAnalyticsAction(params: { startDate?: string; en
     }
 
     // Get user's profile
-    const profile = await db.profile.findUnique({
+    const profile = await db.profile.findFirst({
       where: { userId: session.user.id },
     });
 
@@ -168,7 +168,7 @@ export async function getLinksClickCountsAction(params: { includeBots?: boolean 
     }
 
     // Get user's profile and links
-    const profile = await db.profile.findUnique({
+    const profile = await db.profile.findFirst({
       where: { userId: session.user.id },
       include: {
         links: {

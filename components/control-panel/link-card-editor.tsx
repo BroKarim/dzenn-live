@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Link as LinkIcon, CreditCard, Image as ImageIcon, Loader2, GripVertical, ChevronRight, X, ExternalLink, Pencil } from "lucide-react";
+import { Plus, Trash2, Link as LinkIcon, CreditCard, Image as ImageIcon, Loader2, GripVertical, X, ExternalLink, Pencil } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
