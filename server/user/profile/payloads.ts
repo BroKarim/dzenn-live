@@ -3,7 +3,7 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 export const profileEditorPayload = {
   id: true,
   userId: true,
-  slug: true,
+  username: true,
   displayName: true,
   bio: true,
   avatarUrl: true,
@@ -19,7 +19,6 @@ export const profileEditorPayload = {
   cardTexture: true,
   bgEffects: true,
   bgPattern: true,
-  user: { select: { username: true } },
   socials: { select: { id: true, platform: true, url: true }, orderBy: { position: "asc" } },
   links: {
     select: {
@@ -42,7 +41,7 @@ export const profileEditorPayload = {
 } satisfies Prisma.ProfileSelect;
 
 export const profilePublicPayload = {
-  slug: true,
+  username: true,
   displayName: true,
   bio: true,
   avatarUrl: true,

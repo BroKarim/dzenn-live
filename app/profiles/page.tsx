@@ -1,4 +1,4 @@
-import { profileService } from "@/lib/services/profile.service";
+import { getPublishedProfiles, getPublishedProfileCount } from "@/server/website/profile/queries";
 import { getAvatarUrl } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,20 +7,13 @@ import { BadgeCheck } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 
-export default async function ProfilesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string }>;
-}) {
+export default async function ProfilesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const params = await searchParams;
   const page = parseInt(params.page || "1", 10);
   const limit = 24;
   const offset = (page - 1) * limit;
 
-  const [users, total] = await Promise.all([
-    profileService.getPublishedProfiles(limit, offset),
-    profileService.getPublishedProfileCount(),
-  ]);
+  const [users, total] = await Promise.all([getPublishedProfiles(limit, offset), getPublishedProfileCount()]);
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -30,9 +23,7 @@ export default async function ProfilesPage({
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h1 className="text-2xl font-bold">OneURL Profiles</h1>
-            <p className="text-muted-foreground mt-1">
-              Discover all published profiles on OneURL
-            </p>
+            <p className="text-muted-foreground mt-1">Discover all published profiles on OneURL</p>
           </div>
 
           {users.length === 0 ? (
@@ -57,18 +48,10 @@ export default async function ProfilesPage({
                           <div className="flex flex-col items-center text-center space-y-3">
                             {avatarUrl ? (
                               <div className="size-20 rounded-full overflow-hidden bg-gray-200 shrink-0">
-                                <Image
-                                  src={avatarUrl}
-                                  alt={user.username}
-                                  width={80}
-                                  height={80}
-                                  className="w-full h-full object-cover"
-                                />
+                                <Image src={avatarUrl} alt={user.username} width={80} height={80} className="w-full h-full object-cover" />
                               </div>
                             ) : (
-                              <div className="size-20 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-semibold text-gray-400">
-                                {user.username[0].toUpperCase()}
-                              </div>
+                              <div className="size-20 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-semibold text-gray-400">{user.username[0].toUpperCase()}</div>
                             )}
                             <div className="flex items-center gap-1">
                               <span className="font-semibold">@{user.username}</span>
@@ -86,9 +69,7 @@ export default async function ProfilesPage({
                 <div className="mt-8 flex items-center justify-center gap-2">
                   {page > 1 && (
                     <Link href={`/profiles?page=${page - 1}`}>
-                      <button className="px-4 py-2 rounded-lg border hover:bg-accent/50 transition-colors">
-                        Previous
-                      </button>
+                      <button className="px-4 py-2 rounded-lg border hover:bg-accent/50 transition-colors">Previous</button>
                     </Link>
                   )}
                   <span className="text-sm text-muted-foreground">
@@ -96,9 +77,7 @@ export default async function ProfilesPage({
                   </span>
                   {page < totalPages && (
                     <Link href={`/profiles?page=${page + 1}`}>
-                      <button className="px-4 py-2 rounded-lg border hover:bg-accent/50 transition-colors">
-                        Next
-                      </button>
+                      <button className="px-4 py-2 rounded-lg border hover:bg-accent/50 transition-colors">Next</button>
                     </Link>
                   )}
                 </div>
@@ -111,4 +90,3 @@ export default async function ProfilesPage({
     </div>
   );
 }
-

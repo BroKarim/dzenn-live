@@ -1,6 +1,8 @@
 import React from "react";
 import { Globe } from "lucide-react";
 import { SOCIAL_PLATFORMS } from "@/lib/sosmed";
+
+
 interface PreviewSocialsProps {
   profile: {
     socials: {

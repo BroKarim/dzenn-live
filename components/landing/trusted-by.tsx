@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { profileService } from "@/lib/services/profile.service";
+import { getPublishedProfiles } from "@/server/website/profile/queries";
 import { getAvatarUrl } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 export async function TrustedBy() {
-  const profiles = await profileService.getPublishedProfiles(9);
+  const profiles = await getPublishedProfiles(9);
 
   const avatarData = profiles
     .map((user) => {

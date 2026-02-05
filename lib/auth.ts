@@ -5,9 +5,7 @@ import { db } from "./db";
 const baseURL = process.env.BETTER_AUTH_URL;
 const isProduction = process.env.NODE_ENV === "production";
 
-const trustedOrigins = baseURL
-  ? [baseURL, ...(isProduction && baseURL.includes("www.") ? [baseURL.replace("www.", "")] : [])]
-  : ["http://localhost:3000"];
+const trustedOrigins = baseURL ? [baseURL, ...(isProduction && baseURL.includes("www.") ? [baseURL.replace("www.", "")] : [])] : ["http://localhost:3000"];
 
 export const auth = betterAuth({
   database: prismaAdapter(db, {
@@ -43,4 +41,3 @@ export const auth = betterAuth({
     },
   },
 });
-

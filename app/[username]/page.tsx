@@ -27,13 +27,13 @@ export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params;
 
   // Fetch user profile
-  const user = await getPublicProfile(username);
+  const profile = await getPublicProfile(username);
 
   // Handle not found
-  if (!user || !user.profile?.isPublished) {
+  if (!profile || !profile.isPublished) {
     notFound();
   }
 
   // Render profile
-  return <ProfileView user={user} />;
+  return <ProfileView user={profile} />;
 }

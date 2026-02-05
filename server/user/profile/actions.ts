@@ -16,13 +16,21 @@ async function getAuthenticatedUser() {
   return session.user;
 }
 
+// Helper to get profile ID by user ID - assuming single/primary profile for now
+async function getProfileIdOrThrow(userId: string) {
+  const profile = await db.profile.findFirst({ where: { userId } });
+  if (!profile) throw new Error("Profile not found");
+  return profile.id;
+}
+
 export async function updateProfile(data: ProfileInput) {
   try {
     const user = await getAuthenticatedUser();
     const validatedData = ProfileSchema.parse(data);
+    const profileId = await getProfileIdOrThrow(user.id);
 
     await db.profile.update({
-      where: { userId: user.id },
+      where: { id: profileId },
       data: validatedData,
     });
 
@@ -38,9 +46,10 @@ export async function updateProfile(data: ProfileInput) {
 export async function updateLayout(layout: ProfileLayout) {
   try {
     const user = await getAuthenticatedUser();
+    const profileId = await getProfileIdOrThrow(user.id);
 
     const updated = await db.profile.update({
-      where: { userId: user.id },
+      where: { id: profileId },
       data: { layout },
       select: profileEditorPayload,
     });
@@ -57,9 +66,10 @@ export async function updateLayout(layout: ProfileLayout) {
 export async function updateCardTexture(cardTexture: "base" | "glassy") {
   try {
     const user = await getAuthenticatedUser();
+    const profileId = await getProfileIdOrThrow(user.id);
 
     await db.profile.update({
-      where: { userId: user.id },
+      where: { id: profileId },
       data: { cardTexture },
     });
 
@@ -75,9 +85,10 @@ export async function updateCardTexture(cardTexture: "base" | "glassy") {
 export async function updateBackground(data: { bgType?: "color" | "gradient" | "wallpaper" | "image"; bgColor?: string; bgGradientFrom?: string | null; bgGradientTo?: string | null; bgWallpaper?: string | null; bgImage?: string | null }) {
   try {
     const user = await getAuthenticatedUser();
+    const profileId = await getProfileIdOrThrow(user.id);
 
     await db.profile.update({
-      where: { userId: user.id },
+      where: { id: profileId },
       data,
     });
 
@@ -93,9 +104,10 @@ export async function updateBackground(data: { bgType?: "color" | "gradient" | "
 export async function updateBackgroundEffects(effects: { blur: number; noise: number; brightness: number; saturation: number; contrast: number }) {
   try {
     const user = await getAuthenticatedUser();
+    const profileId = await getProfileIdOrThrow(user.id);
 
     await db.profile.update({
-      where: { userId: user.id },
+      where: { id: profileId },
       data: { bgEffects: effects },
     });
 
@@ -111,9 +123,10 @@ export async function updateBackgroundEffects(effects: { blur: number; noise: nu
 export async function updateBackgroundPattern(pattern: { type: string; color: string; opacity: number; thickness: number; scale: number }) {
   try {
     const user = await getAuthenticatedUser();
+    const profileId = await getProfileIdOrThrow(user.id);
 
     await db.profile.update({
-      where: { userId: user.id },
+      where: { id: profileId },
       data: { bgPattern: pattern },
     });
 
@@ -130,6 +143,7 @@ export async function getProfile() {
   try {
     const user = await getAuthenticatedUser();
 
+    // Queries should be updated to handle non-unique userId too, but assuming findProfileByUserId is updated or we update it separately
     const profile = await findProfileByUserId(user.id);
 
     if (!profile) {

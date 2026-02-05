@@ -42,7 +42,7 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
-  username      String?   @unique
+
   isOnboarded   Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -50,7 +50,7 @@ model User {
   role          Role      @default(USER)
   sessions      Session[]
   accounts      Account[]
-  profile       Profile?
+  profiles      Profile[]
 
   @@map("user")
 }
@@ -105,8 +105,8 @@ model Verification {
 
 model Profile {
   id          String   @id @default(cuid())
-  slug        String? @unique
-  userId      String   @unique
+  username      String   @unique
+  userId      String   
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   // --- Profile Info ---
   displayName String?

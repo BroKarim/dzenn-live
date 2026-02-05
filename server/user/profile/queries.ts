@@ -8,22 +8,23 @@ export async function getProfileData(userId: string) {
   cacheTag(`profile-${userId}`);
   cacheLife("max");
 
-  return await db.profile.findUnique({
+  // Assuming we want the primary/first profile for now
+  return await db.profile.findFirst({
     where: { userId },
     select: profileEditorPayload,
   });
 }
 
 export async function findProfileByUserId(userId: string) {
-  return await db.profile.findUnique({
+  return await db.profile.findFirst({
     where: { userId },
     select: profileEditorPayload,
   });
 }
 
 export async function findProfileByUsername(username: string) {
-  return await db.profile.findFirst({
-    where: { user: { username } },
+  return await db.profile.findUnique({
+    where: { username },
     select: profileEditorPayload,
   });
 }

@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from "@/lib/db";
 import { createHash } from "crypto";
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
@@ -6,34 +6,48 @@ const RATE_LIMIT_MAX_CLICKS = 10;
 const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const BOT_USER_AGENTS = [
-  "bot", "crawler", "spider", "scraper", "curl", "wget", "python", "java",
-  "go-http", "httpie", "postman", "insomnia", "headless", "phantom", "selenium",
-  "webdriver", "puppeteer", "playwright", "googlebot", "bingbot", "slurp",
-  "duckduckbot", "baiduspider", "yandexbot", "sogou", "exabot", "facebot",
-  "ia_archiver", "archive.org_bot", "msnbot", "ahrefs", "semrush", "mj12bot",
+  "bot",
+  "crawler",
+  "spider",
+  "scraper",
+  "curl",
+  "wget",
+  "python",
+  "java",
+  "go-http",
+  "httpie",
+  "postman",
+  "insomnia",
+  "headless",
+  "phantom",
+  "selenium",
+  "webdriver",
+  "puppeteer",
+  "playwright",
+  "googlebot",
+  "bingbot",
+  "slurp",
+  "duckduckbot",
+  "baiduspider",
+  "yandexbot",
+  "sogou",
+  "exabot",
+  "facebot",
+  "ia_archiver",
+  "archive.org_bot",
+  "msnbot",
+  "ahrefs",
+  "semrush",
+  "mj12bot",
 ];
 
-function generateSessionFingerprint(
-  ipAddress: string | null,
-  userAgent: string | null,
-  headers: Record<string, string | null>
-): string {
-  const components = [
-    ipAddress || "unknown",
-    userAgent || "unknown",
-    headers["accept-language"] || "",
-    headers["accept-encoding"] || "",
-  ].join("|");
+function generateSessionFingerprint(ipAddress: string | null, userAgent: string | null, headers: Record<string, string | null>): string {
+  const components = [ipAddress || "unknown", userAgent || "unknown", headers["accept-language"] || "", headers["accept-encoding"] || ""].join("|");
 
   return createHash("sha256").update(components).digest("hex").substring(0, 16);
 }
 
-function generateIdempotencyKey(
-  linkId: string,
-  sessionFingerprint: string,
-  timestamp: number,
-  clientId?: string
-): string {
+function generateIdempotencyKey(linkId: string, sessionFingerprint: string, timestamp: number, clientId?: string): string {
   const key = `${linkId}:${sessionFingerprint}:${timestamp}:${clientId || ""}`;
   return createHash("sha256").update(key).digest("hex").substring(0, 32);
 }
@@ -78,26 +92,26 @@ function detectBrowser(userAgent: string | null): string | null {
 
 function detectOperatingSystem(userAgent: string | null): string | null {
   if (!userAgent) return null;
-  
+
   if (/windows nt 10/i.test(userAgent)) return "windows";
   if (/windows nt 6.3/i.test(userAgent)) return "windows";
   if (/windows nt 6.2/i.test(userAgent)) return "windows";
   if (/windows nt 6.1/i.test(userAgent)) return "windows";
   if (/windows/i.test(userAgent)) return "windows";
-  
+
   if (/macintosh|mac os x/i.test(userAgent)) return "macos";
-  
+
   if (/android/i.test(userAgent)) return "android";
-  
+
   if (/iphone|ipad|ipod/i.test(userAgent)) return "ios";
-  
+
   if (/linux/i.test(userAgent)) {
     if (/ubuntu/i.test(userAgent)) return "ubuntu";
     return "linux";
   }
-  
+
   if (/cros/i.test(userAgent)) return "chrome os";
-  
+
   return "other";
 }
 
@@ -109,11 +123,11 @@ function parseUTMParameters(url: string | null): {
   utmContent?: string;
 } {
   if (!url) return {};
-  
+
   try {
     const urlObj = new URL(url);
     const params = urlObj.searchParams;
-    
+
     return {
       utmSource: params.get("utm_source") || undefined,
       utmMedium: params.get("utm_medium") || undefined,
@@ -128,11 +142,11 @@ function parseUTMParameters(url: string | null): {
 
 function extractReferrerDomain(referrer: string | null): string | null {
   if (!referrer) return "direct";
-  
+
   try {
     const url = new URL(referrer);
     const hostname = url.hostname.toLowerCase();
-    
+
     if (hostname.includes("twitter.com") || hostname.includes("x.com")) return "twitter";
     if (hostname.includes("linkedin.com")) return "linkedin";
     if (hostname.includes("facebook.com")) return "facebook";
@@ -141,7 +155,7 @@ function extractReferrerDomain(referrer: string | null): string | null {
     if (hostname.includes("bing.com")) return "bing";
     if (hostname.includes("reddit.com")) return "reddit";
     if (hostname.includes("instagram.com")) return "instagram";
-    
+
     return hostname;
   } catch {
     return referrer;
@@ -283,11 +297,7 @@ export const trackingService = {
     }
   },
 
-  async trackClickWithRetry(
-    data: TrackingData,
-    maxRetries = 3,
-    retryDelay = 1000
-  ): Promise<TrackingResult> {
+  async trackClickWithRetry(data: TrackingData, maxRetries = 3, retryDelay = 1000): Promise<TrackingResult> {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       if (attempt > 0) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay * attempt));
@@ -315,4 +325,3 @@ export const trackingService = {
     };
   },
 };
-

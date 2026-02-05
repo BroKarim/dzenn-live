@@ -18,7 +18,7 @@ interface EditorHeaderProps {
 
 export default function EditorHeader({ profile }: EditorHeaderProps) {
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "dzenn.link").replace(/https?:\/\//, "");
-  const username = (profile as any).user?.username || profile.slug || "user";
+  const username = profile.username || "user";
   const fullUrl = `${baseUrl}/${username}`;
 
   const { isDirty, markAsSaved, originalProfile, draftProfile } = useEditorStore();

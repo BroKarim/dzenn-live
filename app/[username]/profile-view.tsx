@@ -6,8 +6,7 @@ import { ProfileHeaderButtons } from "./profile-header-buttons";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export function ProfileView({ user }: { user: any }) {
-  const profile = user.profile;
+export function ProfileView({ user: profile }: { user: any }) {
   const avatarUrl = profile.avatarUrl || null;
 
   return (
@@ -20,7 +19,7 @@ export function ProfileView({ user }: { user: any }) {
 
           {/* Header positioned absolutely at top */}
           <div className="absolute top-0 left-0 right-0 z-20 px-6 pt-8">
-            <ProfileHeaderButtons name={user.name} username={user.username} avatarUrl={avatarUrl} />
+            <ProfileHeaderButtons name={profile.user?.name} username={profile.username} avatarUrl={avatarUrl} />
           </div>
 
           {/* Scrollable content area - matches editor preview */}
