@@ -1,8 +1,4 @@
-
-
-## 
-
-
+main ref : https://x.com/proskuaaa/status/1932897625327469036?s=20
 
 
 # TODO: Migrasi API ke Server Actions (ohmylink)

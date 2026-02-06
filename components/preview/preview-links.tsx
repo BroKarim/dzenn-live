@@ -1,10 +1,11 @@
 import React from "react";
 import { TexturedCard } from "@/components/texture-card";
+import type { CardTexture } from "@/lib/generated/prisma/client";
 
 interface PreviewLinksProps {
   profile: {
     links: any[];
-    cardTexture: "base" | "glassy";
+    cardTexture: CardTexture;
   };
   renderLink?: (link: any, children: React.ReactNode) => React.ReactNode;
 }
@@ -22,7 +23,7 @@ export function PreviewLinks({ profile, renderLink }: PreviewLinksProps) {
           const card = (
             <TexturedCard
               key={link.id}
-              title={link.title.toUpperCase()}
+              title={link.title}
               url={link.url}
               description={link.description ?? undefined}
               icon={link.icon ?? undefined}

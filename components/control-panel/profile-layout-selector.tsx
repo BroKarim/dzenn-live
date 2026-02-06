@@ -38,7 +38,7 @@ export function ProfileLayoutSelector({ profile, onUpdate }: ProfileLayoutSelect
               }`}
             >
               <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "opacity-60"}`} />
-              <span className="text-[10px] uppercase tracking-wider font-semibold">{layoutItem.label}</span>
+              <span className="text-[10px]  tracking-wider font-semibold">{layoutItem.label}</span>
             </button>
           );
         })}

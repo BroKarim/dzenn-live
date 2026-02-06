@@ -15,7 +15,7 @@ export function CardTextureSelector({ profile, onUpdate }: CardTextureSelectorPr
 
   return (
     <div className="space-y-3">
-      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Card Texture</Label>
+      <Label className="text-xs tracking-wider text-muted-foreground">Card Texture</Label>
       <div className="grid grid-cols-2 gap-2">
         {textures.map((t) => {
           const Icon = t.icon;

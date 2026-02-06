@@ -34,6 +34,10 @@ enum ProfileLayout {
 enum CardTexture {
   base
   glassy
+  dots
+  grid
+  waves
+  noise
 }
 
 model User {
@@ -113,6 +117,7 @@ model Profile {
   bio         String?
   avatarUrl   String?
   layout      ProfileLayout @default(center)
+  theme       String        @default("glass-dark")
 
   // --- Background Settings ---
   bgType      BackgroundType @default(color)

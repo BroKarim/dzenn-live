@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, PlayCircle, CreditCard } from "lucide-react";
 import { GlassEffect } from "./control-panel/glass-effect";
+import type { CardTexture } from "@/lib/generated/prisma/client";
 
 interface LinkItem {
   id: string;
@@ -17,7 +18,7 @@ interface LinkItem {
 }
 
 interface TexturedCardProps extends Partial<LinkItem> {
-  texture?: "base" | "glassy";
+  texture?: CardTexture;
   titleColor?: string;
   className?: string;
 }
@@ -31,7 +32,7 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
       <div className={`flex flex-1 items-center ${!imageUrl ? "justify-center px-6" : "justify-start pl-6"}`}>
         <div className="flex items-center gap-3">
           {icon && <img src={icon} className="h-8 w-8 rounded-full object-cover shrink-0" alt="" />}
-          <h2 className={`${texture === "glassy" ? "text-white" : titleColor} text-lg font-black tracking-tighter truncate max-w-[200px]`}>{title}</h2>
+          <h2 className={`${texture === "glassy" ? "text-white" : titleColor} text-lg font-semibold tracking-tighter max-w-[200px] `}>{title}</h2>
         </div>
       </div>
       {imageUrl && (
@@ -61,7 +62,6 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
           opacity: { duration: 0.15 },
         },
       }}
-      className="overflow-hidden"
     >
       <motion.div initial={{ y: -10 }} animate={{ y: 0 }} exit={{ y: -10 }} transition={{ duration: 0.2, delay: 0.1 }} className="px-6 pb-6">
         <div className="flex flex-col gap-4  pt-4">

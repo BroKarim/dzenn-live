@@ -2,7 +2,6 @@ import React from "react";
 import { Globe } from "lucide-react";
 import { SOCIAL_PLATFORMS } from "@/lib/sosmed";
 
-
 interface PreviewSocialsProps {
   profile: {
     socials: {
@@ -29,7 +28,12 @@ export function PreviewSocials({ profile }: PreviewSocialsProps) {
               href={social.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-transform hover:scale-110 active:scale-95 border border-white/10"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full backdrop-blur-md transition-transform hover:scale-110 active:scale-95 border"
+              style={{
+                backgroundColor: "var(--accent)",
+                borderColor: "var(--card-border, var(--border))",
+                color: "var(--primary)",
+              }}
             >
               <Icon className="h-5 w-5" />
             </a>

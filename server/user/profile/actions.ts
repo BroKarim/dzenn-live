@@ -82,6 +82,25 @@ export async function updateCardTexture(cardTexture: "base" | "glassy") {
   }
 }
 
+export async function updateTheme(theme: string) {
+  try {
+    const user = await getAuthenticatedUser();
+    const profileId = await getProfileIdOrThrow(user.id);
+
+    await db.profile.update({
+      where: { id: profileId },
+      data: { theme },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/${user.username}`);
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update theme" };
+  }
+}
+
 export async function updateBackground(data: { bgType?: "color" | "gradient" | "wallpaper" | "image"; bgColor?: string; bgGradientFrom?: string | null; bgGradientTo?: string | null; bgWallpaper?: string | null; bgImage?: string | null }) {
   try {
     const user = await getAuthenticatedUser();
