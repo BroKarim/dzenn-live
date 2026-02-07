@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, PlayCircle, CreditCard } from "lucide-react";
 import { GlassEffect } from "./control-panel/glass-effect";
@@ -31,13 +32,17 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
     <div className="flex h-16 rounded-md w-full items-center">
       <div className={`flex flex-1 items-center ${!imageUrl ? "justify-center px-6" : "justify-start pl-6"}`}>
         <div className="flex items-center gap-3">
-          {icon && <img src={icon} className="h-8 w-8 rounded-full object-cover shrink-0" alt="" />}
+          {icon && (
+            <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-white/10">
+              <Image src={icon} fill className="object-cover" alt="" sizes="32px" />
+            </div>
+          )}
           <h2 className={`${texture === "glassy" ? "text-white" : titleColor} text-lg font-semibold tracking-tighter max-w-[200px] `}>{title}</h2>
         </div>
       </div>
       {imageUrl && (
-        <div className="flex w-20 items-center justify-center pl-2 h-full">
-          <img src={imageUrl} className="w-full h-full object-cover shadow-sm" alt={title} />
+        <div className="relative flex w-20 items-center justify-center pl-2 h-full overflow-hidden">
+          <Image src={imageUrl} fill className="object-cover shadow-sm" alt={title || ""} sizes="80px" />
         </div>
       )}
     </div>

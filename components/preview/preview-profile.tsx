@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface PreviewProfileProps {
   profile: {
     displayName: string | null;
@@ -15,9 +17,9 @@ export function PreviewProfile({ profile, isFullBio }: PreviewProfileProps) {
         profile.layout === "center" ? "flex-col items-center text-center" : profile.layout === "left_stack" ? "flex-col items-start text-left" : "items-center justify-between text-left"
       }`}
     >
-      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full shadow-lg border-2 border-white/10">
+      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full shadow-lg border-2 border-white/10 relative">
         {profile.avatarUrl ? (
-          <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+          <Image src={profile.avatarUrl} alt="Avatar" fill className="object-cover" priority sizes="96px" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-2xl font-bold text-white tracking-tighter">{profile.displayName?.charAt(0).toUpperCase() || "B"}</div>
         )}
