@@ -2,10 +2,10 @@
 nixPkgs = ["nodejs_22", "openssl"]
 
 [phases.install]
-cmds = ["npm install -g pnpm@latest && pnpm install --frozen-lockfile"]
+cmds = ["npm install -g pnpm@latest && npx pnpm install --frozen-lockfile"]
 
 [phases.build]
-cmds = ["pnpm run build"]
+cmds = ["npx pnpm run build"]
 
 [start]
-cmd = "pnpm start"
+cmd = "npx pnpm start"
