@@ -4,10 +4,13 @@ import { Label } from "@/components/ui/label";
 import { THEMES, ProfileTheme } from "@/lib/themes";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
 import { updateTheme } from "@/server/user/profile/actions";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Icons } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronDown, Palette } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ThemeSelectorProps {
   profile: ProfileEditorData;
@@ -17,6 +20,7 @@ interface ThemeSelectorProps {
 export function ThemeSelector({ profile, onUpdate }: ThemeSelectorProps) {
   const themes = Object.values(THEMES);
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     // Debounce save to database
@@ -38,42 +42,69 @@ export function ThemeSelector({ profile, onUpdate }: ThemeSelectorProps) {
     };
   }, [profile.theme]);
 
-  const renderIcon = (theme: ProfileTheme) => {
+  const renderIcon = (theme: ProfileTheme, className?: string) => {
     if (theme.icon && Icons[theme.icon as keyof typeof Icons]) {
       const Icon = Icons[theme.icon as keyof typeof Icons];
-      return <Icon className="h-4 w-4 shrink-0" />;
+      return <Icon className={cn("h-4 w-4 shrink-0", className)} />;
     }
-    return <div className="h-4 w-4 shrink-0 rounded-full border border-black/5 dark:border-white/10 shadow-sm" style={{ background: theme.variables["--primary"] || theme.variables["--foreground"] }} />;
+    return <div className={cn("h-4 w-4 shrink-0 rounded-full border border-black/5 dark:border-white/10 shadow-sm", className)} style={{ background: theme.variables["--primary"] || theme.variables["--foreground"] }} />;
   };
+
+  const currentTheme = THEMES[profile.theme] || THEMES["default"];
 
   return (
     <div className="space-y-3">
-      <Label className="text-xs tracking-wider text-muted-foreground  font-semibold">Theme Preset</Label>
-      <Select value={profile.theme} onValueChange={(value) => onUpdate({ ...profile, theme: value })}>
-        <SelectTrigger className="w-full h-12 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors">
-          <SelectValue placeholder="Select a theme">
-            {profile.theme && (
-              <div className="flex items-center gap-3">
-                {renderIcon(THEMES[profile.theme] || THEMES["default"])}
-                <span className="font-medium">{(THEMES[profile.theme] || THEMES["default"]).name}</span>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full h-12 justify-between bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-primary/10 text-primary">{renderIcon(currentTheme, "h-4 w-4")}</div>
+              <div className="flex flex-col items-start leading-tight">
+                <span className="text-sm font-semibold">{currentTheme.name}</span>
+                <span className="text-[10px] text-muted-foreground opacity-70 uppercase tracking-tighter transition-all">Typography Preset</span>
               </div>
-            )}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent side="bottom" align="start" className="rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
-          {themes.map((theme) => (
-            <SelectItem key={theme.id} value={theme.id} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 rounded-lg m-1 py-3 px-3 cursor-pointer">
-              <div className="flex items-center gap-3">
-                {renderIcon(theme)}
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{theme.name}</span>
-                  <span className="text-[10px] text-muted-foreground capitalize opacity-70">{theme.type} mode</span>
-                </div>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+            </div>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[310px] p-0 overflow-hidden border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl shadow-2xl" align="center" sideOffset={8}>
+          <div className="p-2 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center gap-2">
+            <div className="p-1 rounded bg-zinc-200 dark:bg-zinc-800">
+              <Palette className="h-3 w-3 text-zinc-500" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Select Typography</span>
+          </div>
+          <div className="max-h-[350px] overflow-y-auto p-1 custom-scrollbar">
+            {themes.map((theme) => {
+              const isActive = profile.theme === theme.id;
+              return (
+                <button
+                  key={theme.id}
+                  onClick={() => {
+                    onUpdate({ ...profile, theme: theme.id });
+                    setOpen(false);
+                  }}
+                  className={cn("w-full flex items-center justify-between gap-3 p-2.5 rounded-lg transition-all text-left", "hover:bg-zinc-100 dark:hover:bg-zinc-800/80", isActive && "bg-zinc-100/80 dark:bg-zinc-800/50")}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn("p-2 rounded-lg transition-colors", isActive ? "bg-white dark:bg-zinc-950 shadow-sm border border-zinc-200 dark:border-zinc-700" : "bg-zinc-100 dark:bg-zinc-900")}>{renderIcon(theme, "h-4 w-4")}</div>
+                    <div className="flex flex-col">
+                      <span className={cn("text-sm font-medium", isActive ? "text-foreground" : "text-muted-foreground")}>{theme.name}</span>
+                      <span className="text-[10px] text-muted-foreground/60 capitalize leading-none pt-0.5">{theme.variables["--font-sans"].split(",")[0].trim()}</span>
+                    </div>
+                  </div>
+                  {isActive && <Check className="h-4 w-4 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

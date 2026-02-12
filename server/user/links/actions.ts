@@ -159,14 +159,44 @@ export async function updateLink(id: string, data: Partial<LinkInput>) {
       return { success: false, error: "Link not found" };
     }
 
-    // Delete old icon if updated
+    // Helper function to extract base filename without timestamp
+    const getBaseFileName = (url: string | null): string | null => {
+      if (!url) return null;
+      try {
+        const fileName = url.split("/").pop();
+        if (!fileName) return null;
+        // Remove timestamp prefix (e.g., "1234567890-filename.webp" -> "filename.webp")
+        const parts = fileName.split("-");
+        if (parts.length > 1) {
+          // Remove first part (timestamp) and rejoin
+          return parts.slice(1).join("-");
+        }
+        return fileName;
+      } catch {
+        return null;
+      }
+    };
+
+    // Delete old icon if updated (only if it's truly a different file)
     if (data.icon && existingLink.icon && data.icon !== existingLink.icon) {
-      await deleteFromS3(existingLink.icon);
+      const oldFileName = getBaseFileName(existingLink.icon);
+      const newFileName = getBaseFileName(data.icon);
+
+      // Only delete if the base filenames are different (not just timestamp)
+      if (oldFileName !== newFileName) {
+        await deleteFromS3(existingLink.icon);
+      }
     }
 
-    // Delete old media if updated
+    // Delete old media if updated (only if it's truly a different file)
     if (data.mediaUrl && existingLink.mediaUrl && data.mediaUrl !== existingLink.mediaUrl) {
-      await deleteFromS3(existingLink.mediaUrl);
+      const oldFileName = getBaseFileName(existingLink.mediaUrl);
+      const newFileName = getBaseFileName(data.mediaUrl);
+
+      // Only delete if the base filenames are different (not just timestamp)
+      if (oldFileName !== newFileName) {
+        await deleteFromS3(existingLink.mediaUrl);
+      }
     }
 
     await db.link.update({

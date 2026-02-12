@@ -31,7 +31,7 @@ export function PreviewLinks({ profile, renderLink }: PreviewLinksProps) {
               videoUrl={link.mediaType === "video" ? (link.mediaUrl ?? undefined) : undefined}
               isStripeEnabled={!!link.paymentProvider}
               backgroundColor="bg-[#222]"
-              titleColor="text-white"
+              titleColor={cardTexture === "glassy" ? "text-white" : "text-[var(--accent)]"}
               texture={cardTexture}
             />
           );
@@ -43,7 +43,7 @@ export function PreviewLinks({ profile, renderLink }: PreviewLinksProps) {
           return card;
         })
       ) : (
-        <TexturedCard title="ADD YOUR FIRST LINK" backgroundColor="" titleColor="text-white" texture={cardTexture} />
+        <TexturedCard title="ADD YOUR FIRST LINK" backgroundColor="" titleColor={cardTexture === "glassy" ? "text-white" : "text-[var(--accent)]"} texture={cardTexture} />
       )}
     </div>
   );

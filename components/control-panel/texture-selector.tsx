@@ -30,7 +30,7 @@ export function CardTextureSelector({ profile, onUpdate }: CardTextureSelectorPr
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80">Card Style</Label>
+        <Label className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80">Texture</Label>
         <span className="text-[10px] font-medium text-primary/60 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">{textures.find((t) => t.id === profile.cardTexture)?.label || "Default"}</span>
       </div>
 
