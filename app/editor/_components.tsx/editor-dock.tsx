@@ -1,5 +1,3 @@
-"use client";
-
 import { ViewModeToggle } from "@/components/preview";
 
 interface EditorDockProps {

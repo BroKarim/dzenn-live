@@ -11,6 +11,9 @@ interface DockProps {
   iconSize?: number;
 }
 
+// ... (imports remain the same)
+import { CardTexture } from "@/lib/generated/prisma/client";
+
 interface DockIconProps {
   className?: string;
   src?: string;
@@ -19,6 +22,7 @@ interface DockIconProps {
   handleIconHover?: (e: React.MouseEvent<HTMLLIElement>) => void;
   children?: React.ReactNode;
   iconSize?: number;
+  texture?: CardTexture;
 }
 
 type ScaleValueParams = [number, number];
@@ -29,8 +33,9 @@ export const scaleValue = function (value: number, from: ScaleValueParams, to: S
   return Math.floor(capped * scale + to[0]);
 };
 
-export function DockIcon({ className, src, href, label, handleIconHover, children, iconSize }: DockIconProps) {
+export function DockIcon({ className, src, href, label, handleIconHover, children, iconSize, texture }: DockIconProps) {
   const ref = useRef<HTMLLIElement | null>(null);
+  const isGlassy = texture === "glassy";
 
   return (
     <>
@@ -74,12 +79,21 @@ export function DockIcon({ className, src, href, label, handleIconHover, childre
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="group/a relative flex items-center justify-center aspect-square w-full rounded-[10px] border border-gray-100 bg-linear-to-t from-neutral-100 to-white p-1.5 shadow-[rgba(0,0,0,0.05)_0px_1px_0px_inset] after:absolute after:inset-0 after:rounded-[inherit] after:shadow-md after:shadow-zinc-800/10 dark:border-zinc-900 dark:from-zinc-900 dark:to-zinc-800 dark:shadow-[rgba(255,255,255,0.3)_0px_1px_0px_inset]"
-          style={{
-            backgroundColor: "var(--accent)",
-            borderColor: "var(--card-border, var(--border))",
-            color: "var(--primary)",
-          }}
+          className={cn(
+            "group/a relative flex items-center justify-center aspect-square w-full rounded-[10px] p-1.5 transition-all duration-300",
+            isGlassy
+              ? "bg-white/10 border border-white/20 text-white backdrop-blur-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:bg-white/20"
+              : "border border-gray-100 bg-linear-to-t from-neutral-100 to-white shadow-[rgba(0,0,0,0.05)_0px_1px_0px_inset] after:absolute after:inset-0 after:rounded-[inherit] after:shadow-md after:shadow-zinc-800/10 dark:border-zinc-900 dark:from-zinc-900 dark:to-zinc-800 dark:shadow-[rgba(255,255,255,0.3)_0px_1px_0px_inset]",
+          )}
+          style={
+            !isGlassy
+              ? {
+                  backgroundColor: "var(--accent)",
+                  borderColor: "var(--card-border, var(--border))",
+                  color: "var(--primary)",
+                }
+              : {}
+          }
         >
           <span className="absolute top-[-40px] left-1/2 -translate-x-1/2 rounded-md border border-gray-100 bg-linear-to-t from-neutral-100 to-white p-1 px-2 text-[10px] font-medium whitespace-nowrap text-black opacity-0 transition-opacity duration-200 group-hover/li:opacity-100 dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-800 dark:text-white pointer-events-none">
             {label}
@@ -91,7 +105,7 @@ export function DockIcon({ className, src, href, label, handleIconHover, childre
   );
 }
 
-export function Dock({ className, children, maxAdditionalSize = 5, iconSize = 40 }: DockProps) {
+export function Dock({ className, children, maxAdditionalSize = 5, iconSize = 40, texture }: DockProps & { texture?: CardTexture }) {
   const dockRef = useRef<HTMLDivElement | null>(null);
 
   const handleIconHover = (e: React.MouseEvent<HTMLLIElement>) => {
@@ -112,13 +126,21 @@ export function Dock({ className, children, maxAdditionalSize = 5, iconSize = 40
     <div className="flex justify-center w-full">
       <nav ref={dockRef} role="navigation" aria-label="Main Dock" className="pointer-events-auto ">
         <ul
-          className={cn("flex items-center rounded-2xl border border-gray-100 bg-linear-to-t from-neutral-50 to-white p-1 dark:border-zinc-900 dark:from-zinc-950 dark:to-zinc-900 shadow-xl backdrop-blur-md", className)}
-          style={{
-            backgroundColor: "var(--card)",
-            borderColor: "var(--card-border, var(--border))",
-          }}
+          className={cn(
+            "flex items-center rounded-2xl p-1 backdrop-blur-md",
+            !texture || texture !== "glassy" ? "border border-gray-100 bg-linear-to-t from-neutral-50 to-white dark:border-zinc-900 dark:from-zinc-950 dark:to-zinc-900 shadow-xl" : "",
+            className,
+          )}
+          style={
+            !texture || texture !== "glassy"
+              ? {
+                  backgroundColor: "var(--card)",
+                  borderColor: "var(--card-border, var(--border))",
+                }
+              : {}
+          }
         >
-          {React.Children.map(children, (child) => (React.isValidElement<DockIconProps>(child) ? React.cloneElement(child as React.ReactElement<DockIconProps>, { handleIconHover, iconSize }) : child))}
+          {React.Children.map(children, (child) => (React.isValidElement<DockIconProps>(child) ? React.cloneElement(child as React.ReactElement<DockIconProps>, { handleIconHover, iconSize, texture }) : child))}
         </ul>
       </nav>
     </div>
