@@ -74,6 +74,7 @@ jobs:
             docker run -d \
               --name dzenn-app \
               --restart unless-stopped \
+              --network dzenn_default \
               -p 3000:3000 \
               --env-file /root/dzenn/.env \
               $IMAGE_TAG
