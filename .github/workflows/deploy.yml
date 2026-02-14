@@ -16,10 +16,17 @@ jobs:
     permissions:
       contents: read
       packages: write
-
+    outputs:
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set lowercase image tag
+        id: set_tag
+        run: |
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_tag=$IMAGE_LOWER" >> $GITHUB_OUTPUT
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -27,16 +34,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -46,8 +43,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.set_tag.outputs.image_tag }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
@@ -55,7 +51,6 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-
     steps:
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -64,23 +59,25 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            # Login ke GHCR
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag }}:latest"
 
-            # Pull image terbaru
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            # Login GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-            # Stop dan hapus container lama (jika ada)
+            # Pull dulu — kalau gagal STOP, jangan sentuh container lama
+            docker pull $IMAGE_TAG || { echo "❌ Pull failed, aborting deploy"; exit 1; }
+
+            # Baru stop dan replace container lama
             docker stop dzenn-app || true
             docker rm dzenn-app || true
 
-            # Jalankan container baru
             docker run -d \
               --name dzenn-app \
               --restart unless-stopped \
               -p 3000:3000 \
               --env-file /root/dzenn/.env \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+              $IMAGE_TAG
 
-            # Cleanup unused images
+            # Cleanup
             docker image prune -af
+            echo "✅ Deploy sukses: $IMAGE_TAG"
