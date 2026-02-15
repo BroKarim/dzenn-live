@@ -26,7 +26,6 @@ export function Hero() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-zinc-950">
-      {/* Background Image with Optimized Loading */}
       <div className="absolute inset-0 z-0">
         <img
           src="https://res.cloudinary.com/dctl5pihh/image/upload/f_auto,q_auto,w_1920/background_valoru.jpg"
@@ -60,15 +59,15 @@ export function Hero() {
             <div className="mt-8 group relative flex items-center w-full max-w-md transition-all">
               <form onSubmit={handleClaim} className="relative flex-1 flex items-center w-full group">
                 <div className="relative w-full flex items-center">
-                  <div className="w-full flex items-center gap-0 px-4 h-12 transition-all bg-white/10 backdrop-blur-xl hover:bg-white/20 border border-white/20 rounded-full text-white font-medium shadow-2xl">
+                  <div className="w-full flex items-center gap-0 px-4 h-12 transition-all  backdrop-blur-xl hover:bg-white/20 border border-white/20 rounded-full text-white font-medium shadow-2xl">
                     <span className="text-white/40 font-medium select-none text-sm sm:text-base whitespace-nowrap">dzenn.link/</span>
-                    <Input
+                    <input
                       type="text"
                       placeholder="username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ""))}
                       required
-                      className="flex-1 border-none text-white placeholder:text-white/20 h-full px-1 bg-transparent rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 font-medium text-sm sm:text-base cursor-text"
+                      className="flex-1 border-none text-white placeholder:text-white/20 h-full px-1  focus:outline-none  rounded-none font-medium text-sm sm:text-base cursor-text"
                     />
                   </div>
                   <Button

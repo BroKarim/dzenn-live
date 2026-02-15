@@ -3,6 +3,7 @@
 import { Save, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { DomainView } from "@/components/domain-view";
 import { ProfileEditorData } from "@/server/user/profile/payloads";
 import { useEditorStore } from "@/lib/stores/editor-store";
@@ -154,8 +155,8 @@ export default function EditorHeader({ profile }: EditorHeaderProps) {
     <header className="bg-background/95 sticky top-0 z-50 px-6 py-3 border-b">
       <div className="flex items-center justify-between">
         <div className="flex items-center justify-center gap-4">
-          <Link href="/" className="font-bold text-xl tracking-tighter">
-            oh<span className="text-primary text-2xl">!</span>
+          <Link href="/" className="w-10 h-10 flex items-center justify-center rounded-full bg-[#222] border-none text-white font-bold text-sm transition-all hover:scale-105 active:scale-95 shrink-0 shadow-dzenn">
+            Dz
           </Link>
           <DomainView
             placeholder={fullUrl}

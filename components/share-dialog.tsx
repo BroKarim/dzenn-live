@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import type * as React from "react";
-import { Copy, Check, ExternalLink, QrCode, Share2 } from "lucide-react";
+import { Copy, Check, ExternalLink, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { QRCodeDialog } from "@/components/qr-code-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { toastSuccess } from "@/lib/toast";
 
@@ -20,7 +19,6 @@ interface ShareDialogProps {
 
 export function ShareDialog({ open, onOpenChange, name, username, avatarUrl }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
-  const [qrCodeOpen, setQrCodeOpen] = useState(false);
   const profileUrl = username ? `https://oneurl.live/${username}` : "";
 
   const handleCopy = async () => {
@@ -108,14 +106,6 @@ export function ShareDialog({ open, onOpenChange, name, username, avatarUrl }: S
           </div>
 
           <div className="space-y-1">
-            <Button variant="outline" className="w-full justify-between" onClick={() => setQrCodeOpen(true)}>
-              <div className="flex items-center gap-2">
-                <QrCode className="h-4 w-4" />
-                <span>QR code</span>
-              </div>
-              <span className="text-muted-foreground">&gt;</span>
-            </Button>
-
             <Button variant="outline" className="w-full justify-between" onClick={handleShare}>
               <div className="flex items-center gap-2">
                 <Share2 className="h-4 w-4" />
@@ -134,8 +124,6 @@ export function ShareDialog({ open, onOpenChange, name, username, avatarUrl }: S
           </div>
         </div>
       </DialogContent>
-
-      <QRCodeDialog open={qrCodeOpen} onOpenChange={setQrCodeOpen} title="QR Code" url={profileUrl} filename={`${username}-qr-code`} onBack={() => setQrCodeOpen(false)} />
     </Dialog>
   );
 }

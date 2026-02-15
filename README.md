@@ -1,10 +1,40 @@
-# Dzenn
+<p align="center">
+  <a href="https://dzenn.live">
+    <img alt="Dzenn - Not your ordinary linktree" src="public/og.png" width="600">
+  </a>
+</p>
 
-**Not your ordinary linktree** - A nonchalant link-in-bio that hits different. No cap, just vibes.
+<h3 align="center">Dzenn</h3>
+<p align="center">
+    Not your ordinary linktree
+    <br />
+    <br />
+    <a href="#hello"><strong>Introduction</strong></a> ·
+    <a href="#ongoing"><strong>Ongoing</strong></a> ·
+    <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
+    <a href="#project-structure"><strong>Project Structure</strong></a> ·
+    <a href="#license"><strong>License</strong></a>
+</p>
 
+<br/>
+
+## Hello
+
+Dzenn is an open-source **Link-in-Bio** platform designed for creators who demand more than just a list of buttons. It's a "nonchalant" alternative for the creative elite, prioritizing premium aesthetics and a high-end user experience over generic templates.
+
+What makes it different?
+
+- **Total Design Freedom:** Customize backgrounds, patterns, and card layouts to match your unique vibe.
+- **Premium Aesthetics:** Integrated support for **Glassy Textures**, dynamic background patterns (**Waves, Noise, Grids**), and fluid micro-animations.
+- **Creator-Centric:** Built for digital nomads and visionaries who value visual excellence and a clean digital presence.
+- **Open Source & Free:** Dzenn offers a powerful free-forever experience. Built by the community, for the community, with a focus on core freedom.
+
+Replace your boring static links with a stunning, interactive page that actually hits different.
+
+<br/>
 ## Ongoing
 
-- [ ] Support multiple link 
+- [ ] Support multiple link
 - [ ] Add rich components (YouTube, Twitter/X, blog posts, Spotify)
 - [ ] More card design variations (glassmorphism, neumorphism, etc)
 - [ ] Custom domain support
@@ -16,12 +46,10 @@
 - **Language:** TypeScript
 - **Database:** PostgreSQL with Prisma ORM
 - **Authentication:** Better Auth
-- **File Upload:** Cloudinary
+- **File Upload:** AWS S3
 - **State Management:** Zustand + TanStack Query
 - **Styling:** Tailwind CSS
 - **UI Components:** shadcn/ui + Radix UI
-- **Charts:** Recharts
-- **Drag & Drop:** @dnd-kit
 
 ## Project Structure
 
@@ -53,4 +81,4 @@ This project is licensed under the **GNU General Public License v3.0** - see the
 
 ---
 
-Made with ✨ by [BroKarim](https://github.com/BroKarim)
+Made with ❤️ by [BroKarim](https://github.com/BroKarim)

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
-import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 interface CallbackClientProps {
   redirectTo: string;
@@ -11,43 +11,58 @@ interface CallbackClientProps {
 
 export function CallbackClient({ redirectTo }: CallbackClientProps) {
   const router = useRouter();
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
-    router.replace(redirectTo);
+    // Small delay to allow the animation/brand to be seen
+    const timer = setTimeout(() => {
+      router.replace(redirectTo);
+    }, 800);
+    return () => clearTimeout(timer);
   }, [router, redirectTo]);
 
   const getMessage = () => {
     if (redirectTo.startsWith("/editor") || redirectTo === "/editor") {
-      return "Taking you to your editor";
+      return "Preparing your creative space";
     }
     if (redirectTo === "/login") {
-      return "Redirecting to login";
+      return "Returning to login";
     }
     return "Redirecting...";
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-100">
-      <div className="text-center space-y-6 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-zinc-950 overflow-hidden relative">
+      <div className="text-center space-y-8 px-4 relative z-10">
         <div className="flex justify-center">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-16 w-16 rounded-full bg-zinc-200 animate-pulse"></div>
-            </div>
-            <div className="relative flex items-center justify-center">
-              <Image src="/logo.png" alt="OneURL" width={64} height={64} className="h-16 w-16" priority />
+          <div className="relative group">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-white/10 blur-2xl rounded-full scale-110 opacity-50 group-hover:opacity-100 transition-opacity" />
+
+            <div className="relative h-20 w-20 flex items-center justify-center">
+              <img
+                src="/logo.png"
+                alt="Dzenn Logo"
+                fetchPriority="high"
+                loading="eager"
+                onLoad={() => setImageLoaded(true)}
+                className={cn("h-16 w-16 object-contain transition-all duration-1000", imageLoaded ? "opacity-100 scale-100 blur-0" : "opacity-0 scale-90 blur-md")}
+              />
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <Spinner className="h-5 w-5 text-zinc-900" />
-            <p className="text-sm font-medium text-zinc-900">Redirecting...</p>
+        <div className="space-y-4">
+          <div className="flex flex-col items-center justify-center gap-3">
+            <Spinner className="h-4 w-4 text-white/40" />
+            <p className="text-sm font-medium text-white tracking-widest uppercase opacity-70">{getMessage()}</p>
           </div>
-          <p className="text-xs text-zinc-500">{getMessage()}</p>
+          <p className="text-[10px] text-white/30 tracking-[0.2em] font-light italic">Dzenn · Built for creators</p>
         </div>
       </div>
+
+      {/* Subtle background details */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
     </div>
   );
 }
