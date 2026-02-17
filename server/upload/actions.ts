@@ -22,3 +22,29 @@ export async function uploadImage(base64: string, fileName: string) {
     return { success: false, error: "Failed to upload image" };
   }
 }
+
+import { getPresignedUploadUrl } from "@/lib/s3";
+
+export async function getUploadUrl(fileName: string, contentType: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    if (!contentType.startsWith("image/")) {
+      return { success: false, error: "Only images are allowed" };
+    }
+
+    // Generate presigned URL
+    const { url, publicUrl } = await getPresignedUploadUrl(fileName, contentType, "uploads");
+
+    return { success: true, url, publicUrl };
+  } catch (error) {
+    console.error("Failed to get upload URL:", error);
+    return { success: false, error: "Failed to get upload URL" };
+  }
+}

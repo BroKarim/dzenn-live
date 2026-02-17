@@ -83,3 +83,49 @@ Goal: Migrate from Supabase (cloud) to a self-hosted PostgreSQL instance on the 
 
 - [ ] **Restart App:** Redeploy or restart the app container to pick up the new database connection.
 - [ ] **Validation:** Check logs for connection errors and verify data consistency.
+
+---
+
+# 🚀 S3 Presigned URL Implementation (Direct-to-S3 Upload)
+
+Goal: Move from Proxy Upload (Client → VPS → S3) to Direct Upload (Client → S3) using S3 Presigned URLs to reduce VPS resource load and bypass payload limits.
+
+## 1. Backend Configuration (Server)
+
+- [ ] **CORS Policy Strategy:**
+  - Update AWS S3 Bucket CORS configuration to allow `PUT` requests from `https://dzenn.live` (and `http://localhost:3000`).
+- [ ] **Presigned URL Action:**
+  - Create a new server action `getPresignedUrl` in `server/upload/actions.ts`.
+  - Use `@aws-sdk/s3-request-presigner` to generate a `PUT` URL for a specific key (e.g., `uploads/avatars/{userId}-{timestamp}.png`).
+  - Set expiration time (e.g., 60 seconds).
+
+## 2. Frontend Implementation (Client)
+
+- [ ] **Refactor `ProfileEditor`:**
+  - Update the upload logic in `components/control-panel/profile-editor.tsx`.
+  - Step 1: Call `getPresignedUrl` to get the authorized URL.
+  - Step 2: Use standard `fetch(url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })`.
+  - Step 3: Once success, update the profile `avatarUrl` with the final S3 URL.
+- [ ] **Optimization:**
+  - Implement progress bar (optional) using `XMLHttpRequest` instead of `fetch` for better UX.
+
+## 3. Cleanup & Final Check
+
+- [ ] **Remove Proxy Logic:**
+  - Delete `uploadBase64ToS3` and the old `uploadImage` action once the new system is stable.
+- [ ] **Security:**
+  - Ensure users can only generate URLs for their own directories/filenames if possible.
+- [ ] **Validation:** Verify images are readable via CloudFront after direct upload.
+
+## 4. Old File Deletion Strategy (Optimization)
+
+Goal: Remove old profile pictures from S3 to save storage costs, but ONLY after the new profile picture is successfully updated in the database.
+
+- [ ] **Logic in `updateProfile` Action:**
+  - In `server/user/profile/actions.ts`:
+  - Before updating the database, fetch the current profile to get `oldAvatarUrl`.
+  - Perform the DB update with the new `avatarUrl`.
+  - If DB update is successful AND `oldAvatarUrl` exists:
+    - Extract the S3 Key from `oldAvatarUrl`.
+    - Call `deleteFromS3(key)` (import from `@/lib/s3`).
+  - Wrap deletion in a generic error handler so it doesn't fail the main request if S3 deletion fails (it's a background task).

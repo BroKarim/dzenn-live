@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const s3Client = new S3Client({
+export const s3Client = new S3Client({
   region: process.env.S3_REGION!,
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY!,
@@ -57,4 +58,25 @@ export async function uploadBase64ToS3(base64: string, fileName: string): Promis
   const buffer = Buffer.from(data, "base64");
 
   return uploadToS3(buffer, fileName, contentType);
+}
+
+export async function getPresignedUploadUrl(fileName: string, contentType: string, folder: string = "uploads") {
+  const bucket = process.env.S3_BUCKET!;
+  // Sanitize filename and add timestamp
+  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const key = `${folder}/${Date.now()}-${sanitizedFileName}`;
+
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+  });
+
+  const url = await getSignedUrl(s3Client, command, { expiresIn: 60 }); // 60 seconds
+
+  return {
+    url,
+    key,
+    publicUrl: `${process.env.S3_PUBLIC_URL}/${key}`,
+  };
 }

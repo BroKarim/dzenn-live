@@ -23,16 +23,35 @@ async function getProfileIdOrThrow(userId: string) {
   return profile.id;
 }
 
+import { deleteFromS3 } from "@/lib/s3";
+
+// ... existing imports
+
 export async function updateProfile(data: ProfileInput) {
   try {
     const user = await getAuthenticatedUser();
     const validatedData = ProfileSchema.parse(data);
-    const profileId = await getProfileIdOrThrow(user.id);
 
+    // 1. Get current profile to check for old avatar
+    const currentProfile = await db.profile.findFirst({
+      where: { userId: user.id },
+      select: { id: true, avatarUrl: true },
+    });
+
+    if (!currentProfile) throw new Error("Profile not found");
+    const profileId = currentProfile.id;
+
+    // 2. Perform Update
     await db.profile.update({
       where: { id: profileId },
       data: validatedData,
     });
+
+    // 3. Cleanup Old Avatar (Non-blocking)
+    if (currentProfile.avatarUrl && validatedData.avatarUrl && currentProfile.avatarUrl !== validatedData.avatarUrl) {
+      // Don't await this, let it run in background or handle error silently
+      deleteFromS3(currentProfile.avatarUrl).catch((err) => console.error("Failed to delete old avatar:", err));
+    }
 
     revalidatePath("/dashboard");
     revalidatePath(`/${user.username}`);

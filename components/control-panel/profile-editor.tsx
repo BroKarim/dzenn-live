@@ -4,7 +4,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
-import { uploadImage } from "@/server/upload/actions";
+import { getUploadUrl } from "@/server/upload/actions";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -36,32 +36,37 @@ export function ProfileEditor({ profile, onUpdate }: ProfileEditorProps) {
     const uploadToast = toast.loading("Uploading avatar...");
 
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
+      // 1. Get Presigned URL
+      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
 
-        // Upload to S3
-        const result = await uploadImage(base64, file.name);
+      if (!success || !url) {
+        throw new Error(error || "Failed to get upload URL");
+      }
 
-        if (result.success && result.url) {
-          onUpdate({
-            ...profile,
-            avatarUrl: result.url,
-          });
-          toast.success("Avatar uploaded successfully", { id: uploadToast });
-        } else {
-          toast.error(result.error || "Failed to upload avatar", { id: uploadToast });
-        }
+      // 2. Upload directly to S3
+      const uploadResponse = await fetch(url, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
 
-        setIsUploading(false);
-      };
-      reader.onerror = () => {
-        toast.error("Failed to read file", { id: uploadToast });
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      toast.error("Failed to upload avatar", { id: uploadToast });
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload to storage");
+      }
+
+      // 3. Update Profile
+      onUpdate({
+        ...profile,
+        avatarUrl: publicUrl!,
+      });
+
+      toast.success("Avatar uploaded successfully", { id: uploadToast });
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(error.message || "Failed to upload avatar", { id: uploadToast });
+    } finally {
       setIsUploading(false);
     }
   };
