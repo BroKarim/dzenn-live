@@ -162,7 +162,7 @@ export function SettingsTab({ profile }: SettingsTabProps) {
           </div>
           <div className="relative flex items-center w-full max-w-md">
             <div className="relative flex-1 flex items-center overflow-hidden">
-              <div className="absolute left-4 text-sm text-muted-foreground font-medium pointer-events-none">dzenn.link/</div>
+              <div className="absolute left-4 text-sm text-muted-foreground font-medium pointer-events-none">dzenn.live/</div>
               <input
                 id="username"
                 value={username}
@@ -226,7 +226,7 @@ export function SettingsTab({ profile }: SettingsTabProps) {
                 <AlertDialogTitle className="text-xl font-bold">Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription className="text-zinc-400">
                   This action is irreversible. This will permanently delete your profile and all associated data.
-                  {profile.username && <span className="block mt-2 font-medium text-destructive">Warning: dzenn.link/{profile.username} will be gone forever.</span>}
+                  {profile.username && <span className="block mt-2 font-medium text-destructive">Warning: dzenn.live/{profile.username} will be gone forever.</span>}
                   If this is your only profile, your entire account will also be closed.
                 </AlertDialogDescription>
               </AlertDialogHeader>

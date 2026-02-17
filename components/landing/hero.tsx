@@ -60,7 +60,7 @@ export function Hero() {
               <form onSubmit={handleClaim} className="relative flex-1 flex items-center w-full group">
                 <div className="relative w-full flex items-center">
                   <div className="w-full flex items-center gap-0 px-4 h-12 transition-all  backdrop-blur-xl hover:bg-white/20 border border-white/20 rounded-full text-white font-medium shadow-2xl">
-                    <span className="text-white/40 font-medium select-none text-sm sm:text-base whitespace-nowrap">dzenn.link/</span>
+                    <span className="text-white/40 font-medium select-none text-sm sm:text-base whitespace-nowrap">dzenn.live/</span>
                     <input
                       type="text"
                       placeholder="username"
