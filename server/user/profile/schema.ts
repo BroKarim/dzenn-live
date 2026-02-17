@@ -12,7 +12,7 @@ export const BackgroundEffectsSchema = z.object({
 export const ProfileSchema = z.object({
   displayName: z.string().min(1, "Name is required").max(50),
   bio: z.string().max(160).optional().nullable(),
-  avatarUrl: z.string().url().optional().nullable(),
+  avatarUrl: z.string().url().optional().nullable().or(z.literal("")).or(z.literal(null)),
   layout: z.nativeEnum(ProfileLayout),
 
   bgType: z.nativeEnum(BackgroundType),

@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
 
 interface CallbackClientProps {
   redirectTo: string;
@@ -11,7 +10,6 @@ interface CallbackClientProps {
 
 export function CallbackClient({ redirectTo }: CallbackClientProps) {
   const router = useRouter();
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     // Small delay to allow the animation/brand to be seen
@@ -39,16 +37,7 @@ export function CallbackClient({ redirectTo }: CallbackClientProps) {
             {/* Glow effect */}
             <div className="absolute inset-0 bg-white/10 blur-2xl rounded-full scale-110 opacity-50 group-hover:opacity-100 transition-opacity" />
 
-            <div className="relative h-20 w-20 flex items-center justify-center">
-              <img
-                src="/logo.png"
-                alt="Dzenn Logo"
-                fetchPriority="high"
-                loading="eager"
-                onLoad={() => setImageLoaded(true)}
-                className={cn("h-16 w-16 object-contain transition-all duration-1000", imageLoaded ? "opacity-100 scale-100 blur-0" : "opacity-0 scale-90 blur-md")}
-              />
-            </div>
+            <div className="relative h-20 w-20 flex items-center justify-center rounded-2xl bg-[#222] border-none text-white font-bold text-3xl shadow-dzenn">Dz</div>
           </div>
         </div>
 
