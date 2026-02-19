@@ -61,7 +61,7 @@ export default function EditorClient({ initialProfile }: EditorClientProps) {
       <NavigationGuard />
       <EditorHeader profile={currentProfile} />
 
-      <div className="flex flex-1 gap-6 overflow-hidden p-6">
+      <div className="flex flex-1 gap-6 overflow-hidden p-6" style={{ zoom: 0.9 }}>
         <Preview profile={currentProfile} viewMode={viewMode} />
 
         <ControlPanel profile={currentProfile} onUpdate={updateDraft} />

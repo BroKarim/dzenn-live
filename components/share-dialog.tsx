@@ -19,7 +19,7 @@ interface ShareDialogProps {
 
 export function ShareDialog({ open, onOpenChange, name, username, avatarUrl }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
-  const profileUrl = username ? `https://oneurl.live/${username}` : "";
+  const profileUrl = username ? `https://dzenn.live/${username}` : "";
 
   const handleCopy = async () => {
     if (!profileUrl) return;
@@ -68,7 +68,7 @@ export function ShareDialog({ open, onOpenChange, name, username, avatarUrl }: S
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share your OneURL</DialogTitle>
+          <DialogTitle>Share your link</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -103,24 +103,6 @@ export function ShareDialog({ open, onOpenChange, name, username, avatarUrl }: S
                 </Tooltip>
               </TooltipProvider>
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <Button variant="outline" className="w-full justify-between" onClick={handleShare}>
-              <div className="flex items-center gap-2">
-                <Share2 className="h-4 w-4" />
-                <span>Share to...</span>
-              </div>
-              <span className="text-muted-foreground">&gt;</span>
-            </Button>
-
-            <Button variant="outline" className="w-full justify-between" onClick={handleOpen}>
-              <div className="flex items-center gap-2">
-                <ExternalLink className="h-4 w-4" />
-                <span>Open</span>
-              </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-            </Button>
           </div>
         </div>
       </DialogContent>
