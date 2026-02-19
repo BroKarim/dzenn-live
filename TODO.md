@@ -121,7 +121,7 @@ Goal: Move from Proxy Upload (Client → VPS → S3) to Direct Upload (Client �
 
 Goal: Remove old profile pictures from S3 to save storage costs, but ONLY after the new profile picture is successfully updated in the database.
 
-- [ ] **Logic in `updateProfile` Action:**
+- [x] **Logic in `updateProfile` Action:**
   - In `server/user/profile/actions.ts`:
   - Before updating the database, fetch the current profile to get `oldAvatarUrl`.
   - Perform the DB update with the new `avatarUrl`.
@@ -129,3 +129,26 @@ Goal: Remove old profile pictures from S3 to save storage costs, but ONLY after 
     - Extract the S3 Key from `oldAvatarUrl`.
     - Call `deleteFromS3(key)` (import from `@/lib/s3`).
   - Wrap deletion in a generic error handler so it doesn't fail the main request if S3 deletion fails (it's a background task).
+
+---
+
+# 🐛 Bug Fixes & Stability Optimizations
+
+## 1. Intermittent "Failed to Save" (Connection Pool Exhaustion)
+
+- **Problem:** `Promise.all` fired 5+ parallel HTTP requests for a single "Save Changes" click, exhausting the VPS database connection pool.
+- **Fix:** Consolidated 5 profile actions into one `saveAllProfileChanges` server action. Reduced DB round-trips from 5 → 1.
+
+## 2. Duplicate Links & Persistent Corrupt State
+
+- **Problem:** Corrupted `draftProfile` was persisting in `localStorage`. The store favored stale local drafts over fresh server data upon refresh.
+- **Fix:** Refactored `editor-store.ts` to always update with server data and only restore drafts if all link IDs are still valid in the DB.
+
+## 3. Prisma P2025 Error on Reorder/Delete
+
+- **Problem:** `db.link.update` throws a fatal error if a record is missing (race condition).
+- **Fix:** Replaced with `db.link.updateMany` and `db.link.deleteMany`, which handle missing records gracefully without crashing the transaction.
+
+## 4. Backend Refactoring (Clean Code)
+
+- **Fix:** Implemented `withAuth` HOF in `links/actions.ts` to centralize authentication, logging, and error handling, making server actions significantly cleaner and more robust.

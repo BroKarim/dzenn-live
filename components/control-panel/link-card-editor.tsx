@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Link as LinkIcon, CreditCard, Image as ImageIcon, Loader2, GripVertical, X, ExternalLink, Pencil } from "lucide-react";
+import { Plus, Trash2, Link as LinkIcon, Image as ImageIcon, Loader2, GripVertical, X, ExternalLink, Pencil } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
-import { uploadMedia } from "@/server/user/links/actions";
+import { getUploadUrl } from "@/server/upload/actions";
+import { compressImage } from "@/lib/media";
 import { LinkEditDialog } from "./link-edit-dialog";
 import { toast } from "sonner";
 import { Button2 } from "@/components/ui/button-2";
@@ -45,7 +46,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
   });
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/x-icon", "image/vnd.microsoft.icon", "image/svg+xml", "image/jpg"];
@@ -54,33 +55,54 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const result = reader.result as string;
-      setLogoPreview(result);
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size too large (max 5MB)");
+      return;
+    }
 
-      const uploadToast = toast.loading("Uploading icon...");
+    const uploadToast = toast.loading("Compressing & Uploading icon...");
 
-      try {
-        const uploadResult = await uploadMedia(result, file.name, "icon");
-        if (uploadResult.success && uploadResult.url) {
-          // Store old icon for cleanup during save (handled by editor-header)
-          setNewLink({ ...newLink, icon: uploadResult.url });
-          toast.success("Icon uploaded!", { id: uploadToast });
-        } else {
-          toast.error(uploadResult.error || "Failed to upload icon", { id: uploadToast });
-          setLogoPreview(null);
+    try {
+      // 1. Client-side Compression (skip for ICO/SVG)
+      if (!file.type.includes("svg") && !file.type.includes("icon")) {
+        try {
+          const compressed = await compressImage(file, {
+            maxSizeMB: 0.1, // Icon can be very small (100KB)
+            maxWidthOrHeight: 256,
+          });
+          file = compressed;
+        } catch (err) {
+          console.warn("Compression failed, using original", err);
         }
-      } catch (error) {
-        toast.error("Error uploading icon", { id: uploadToast });
-        setLogoPreview(null);
       }
-    };
-    reader.readAsDataURL(file);
+
+      // 2. Get Presigned URL
+      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+
+      if (!success || !url) throw new Error(error || "Failed to get upload URL");
+
+      // 3. Upload to S3
+      const res = await fetch(url, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!res.ok) throw new Error("Failed to upload icon to S3");
+
+      setNewLink({ ...newLink, icon: publicUrl! });
+      setLogoPreview(publicUrl!); // Preview directly from S3 URL or creating object URL is better, but this works if publicUrl is fast
+
+      toast.success("Icon uploaded!", { id: uploadToast });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Error uploading icon", { id: uploadToast });
+      setLogoPreview(null);
+    }
   };
 
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
@@ -89,32 +111,52 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const result = reader.result as string;
-      setMediaPreview(result);
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size too large (max 10MB)");
+      return;
+    }
 
-      const uploadToast = toast.loading("Uploading media...");
+    const uploadToast = toast.loading("Compressing & Uploading media...");
 
+    try {
+      // 1. Client-side Compression
       try {
-        const uploadResult = await uploadMedia(result, file.name, "media");
-        if (uploadResult.success && uploadResult.url) {
-          setNewLink({
-            ...newLink,
-            mediaUrl: uploadResult.url,
-            mediaType: "image",
-          });
-          toast.success("Media uploaded!", { id: uploadToast });
-        } else {
-          toast.error(uploadResult.error || "Failed to upload media", { id: uploadToast });
-          setMediaPreview(null);
-        }
-      } catch (error) {
-        toast.error("Error uploading media", { id: uploadToast });
-        setMediaPreview(null);
+        const compressed = await compressImage(file, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 800,
+        });
+        file = compressed;
+      } catch (err) {
+        console.warn("Compression failed, using original", err);
       }
-    };
-    reader.readAsDataURL(file);
+
+      // 2. Get Presigned URL
+      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+
+      if (!success || !url) throw new Error(error || "Failed to get upload URL");
+
+      // 3. Upload to S3
+      const res = await fetch(url, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!res.ok) throw new Error("Failed to upload media to S3");
+
+      setNewLink({
+        ...newLink,
+        mediaUrl: publicUrl!,
+        mediaType: "image",
+      });
+      setMediaPreview(publicUrl!);
+
+      toast.success("Media uploaded!", { id: uploadToast });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Error uploading media", { id: uploadToast });
+      setMediaPreview(null);
+    }
   };
 
   const handlePaymentSelect = (provider: "stripe" | "lemonsqueezy") => {

@@ -5,340 +5,128 @@ import { auth } from "@/lib/auth";
 import { SocialLinkSchema, LinkSchema, SocialLinkInput, LinkInput } from "./schema";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { uploadToS3, deleteFromS3 } from "@/lib/s3";
-import { optimizeImage } from "@/lib/media";
+import { deleteFromS3 } from "@/lib/s3";
 
-// ============= SOCIAL LINKS =============
+// ─── Auth Helper ──────────────────────────────────────────────────────────────
 
-export async function createSocialLink(data: SocialLinkInput) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const profile = await db.profile.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
-    });
-
-    if (!profile) {
-      return { success: false, error: "Profile not found" };
-    }
-
-    const validatedData = SocialLinkSchema.parse(data);
-
-    const socialLink = await db.socialLink.create({
-      data: {
-        ...validatedData,
-        profileId: profile.id,
-      },
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${session.user.username}`);
-
-    return { success: true, data: socialLink };
-  } catch (error) {
-    console.error("Failed to create social link:", error);
-    return { success: false, error: "Failed to create social link" };
-  }
+async function getSession() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) throw new Error("Unauthorized");
+  return session.user;
 }
 
-export async function updateSocialLink(id: string, data: SocialLinkInput) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const validatedData = SocialLinkSchema.parse(data);
-
-    await db.socialLink.update({
-      where: { id },
-      data: validatedData,
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${session.user.username}`);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to update social link:", error);
-    return { success: false, error: "Failed to update social link" };
-  }
+async function getProfileId(userId: string) {
+  const profile = await db.profile.findFirst({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!profile) throw new Error("Profile not found");
+  return profile.id;
 }
 
-export async function deleteSocialLink(id: string) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+function withAuth<TArgs extends any[], TReturn>(fn: (user: Awaited<ReturnType<typeof getSession>>, ...args: TArgs) => Promise<TReturn>) {
+  return async (...args: TArgs): Promise<{ success: true; data?: any } | { success: false; error: string }> => {
+    try {
+      const user = await getSession();
+      return (await fn(user, ...args)) as any;
+    } catch (error: any) {
+      console.error(`[links/actions] ${error.message}`);
+      return { success: false, error: error.message || "An error occurred" };
     }
-
-    await db.socialLink.delete({
-      where: { id },
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${session.user.username}`);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to delete social link:", error);
-    return { success: false, error: "Failed to delete social link" };
-  }
+  };
 }
 
-// ============= LINKS =============
+// ─── Social Links ─────────────────────────────────────────────────────────────
 
-export async function createLink(data: LinkInput) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+export const createSocialLink = withAuth(async (user, data: SocialLinkInput) => {
+  const profileId = await getProfileId(user.id);
+  const validated = SocialLinkSchema.parse(data);
 
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+  const socialLink = await db.socialLink.create({
+    data: { ...validated, profileId },
+  });
 
-    const profile = await db.profile.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
-    });
+  revalidatePath(`/${user.username}`);
+  return { success: true, data: socialLink };
+});
 
-    if (!profile) {
-      return { success: false, error: "Profile not found" };
-    }
+export const updateSocialLink = withAuth(async (user, id: string, data: SocialLinkInput) => {
+  const validated = SocialLinkSchema.parse(data);
 
-    const validatedData = LinkSchema.parse(data);
+  await db.socialLink.update({ where: { id }, data: validated });
 
-    const link = await db.link.create({
-      data: {
-        ...validatedData,
-        profileId: profile.id,
-      },
-    });
+  revalidatePath(`/${user.username}`);
+  return { success: true };
+});
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/${session.user.username}`);
+export const deleteSocialLink = withAuth(async (user, id: string) => {
+  // deleteMany avoids P2025 if record was already deleted
+  await db.socialLink.deleteMany({ where: { id } });
 
-    return { success: true, data: link };
-  } catch (error) {
-    console.error("Failed to create link:", error);
-    return { success: false, error: "Failed to create link" };
+  revalidatePath(`/${user.username}`);
+  return { success: true };
+});
+
+// ─── Links ────────────────────────────────────────────────────────────────────
+
+export const createLink = withAuth(async (user, data: LinkInput) => {
+  const profileId = await getProfileId(user.id);
+  const validated = LinkSchema.parse(data);
+
+  const link = await db.link.create({
+    data: { ...validated, profileId },
+  });
+
+  revalidatePath(`/${user.username}`);
+  return { success: true, data: link };
+});
+
+export const updateLink = withAuth(async (user, id: string, data: Partial<LinkInput>) => {
+  const existing = await db.link.findUnique({
+    where: { id },
+    select: { icon: true, mediaUrl: true },
+  });
+
+  if (!existing) throw new Error("Link not found");
+
+  // Delete old S3 assets if replaced (non-blocking)
+  if (data.icon && existing.icon && data.icon !== existing.icon) {
+    deleteFromS3(existing.icon).catch(console.error);
   }
-}
-
-export async function updateLink(id: string, data: Partial<LinkInput>) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    // Fetch existing link to check for files to delete
-    const existingLink = await db.link.findUnique({
-      where: { id },
-      select: { icon: true, mediaUrl: true },
-    });
-
-    if (!existingLink) {
-      return { success: false, error: "Link not found" };
-    }
-
-    // Helper function to extract base filename without timestamp
-    const getBaseFileName = (url: string | null): string | null => {
-      if (!url) return null;
-      try {
-        const fileName = url.split("/").pop();
-        if (!fileName) return null;
-        // Remove timestamp prefix (e.g., "1234567890-filename.webp" -> "filename.webp")
-        const parts = fileName.split("-");
-        if (parts.length > 1) {
-          // Remove first part (timestamp) and rejoin
-          return parts.slice(1).join("-");
-        }
-        return fileName;
-      } catch {
-        return null;
-      }
-    };
-
-    // Delete old icon if updated (only if it's truly a different file)
-    if (data.icon && existingLink.icon && data.icon !== existingLink.icon) {
-      const oldFileName = getBaseFileName(existingLink.icon);
-      const newFileName = getBaseFileName(data.icon);
-
-      // Only delete if the base filenames are different (not just timestamp)
-      if (oldFileName !== newFileName) {
-        await deleteFromS3(existingLink.icon);
-      }
-    }
-
-    // Delete old media if updated (only if it's truly a different file)
-    if (data.mediaUrl && existingLink.mediaUrl && data.mediaUrl !== existingLink.mediaUrl) {
-      const oldFileName = getBaseFileName(existingLink.mediaUrl);
-      const newFileName = getBaseFileName(data.mediaUrl);
-
-      // Only delete if the base filenames are different (not just timestamp)
-      if (oldFileName !== newFileName) {
-        await deleteFromS3(existingLink.mediaUrl);
-      }
-    }
-
-    await db.link.update({
-      where: { id },
-      data,
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${session.user.username}`);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to update link:", error);
-    return { success: false, error: "Failed to update link" };
+  if (data.mediaUrl && existing.mediaUrl && data.mediaUrl !== existing.mediaUrl) {
+    deleteFromS3(existing.mediaUrl).catch(console.error);
   }
-}
 
-export async function deleteLink(id: string) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+  await db.link.update({ where: { id }, data });
 
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+  revalidatePath(`/${user.username}`);
+  return { success: true };
+});
 
-    // Fetch link to delete its files from S3
-    const link = await db.link.findUnique({
-      where: { id },
-      select: { icon: true, mediaUrl: true },
-    });
+export const deleteLink = withAuth(async (user, id: string) => {
+  const link = await db.link.findUnique({
+    where: { id },
+    select: { icon: true, mediaUrl: true },
+  });
 
-    if (link) {
-      if (link.icon) await deleteFromS3(link.icon);
-      if (link.mediaUrl) await deleteFromS3(link.mediaUrl);
-    }
+  // Guard: record may already be gone (e.g. duplicate save scenario)
+  if (!link) return { success: true };
 
-    await db.link.delete({
-      where: { id },
-    });
+  // Delete S3 assets first (non-blocking)
+  if (link.icon) deleteFromS3(link.icon).catch(console.error);
+  if (link.mediaUrl) deleteFromS3(link.mediaUrl).catch(console.error);
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/${session.user.username}`);
+  // deleteMany avoids P2025 if record was already deleted between the findUnique and delete
+  await db.link.deleteMany({ where: { id } });
 
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to delete link:", error);
-    return { success: false, error: "Failed to delete link" };
-  }
-}
+  revalidatePath(`/${user.username}`);
+  return { success: true };
+});
 
-export async function reorderLinks(linkIds: string[]) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+export const reorderLinks = withAuth(async (user, linkIds: string[]) => {
+  // updateMany silently skips missing IDs instead of throwing P2025
+  await db.$transaction(linkIds.map((id, index) => db.link.updateMany({ where: { id }, data: { position: index } })));
 
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    // Update positions for each link
-    await db.$transaction(
-      linkIds.map((id, index) =>
-        db.link.update({
-          where: { id },
-          data: { position: index },
-        }),
-      ),
-    );
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${session.user.username}`);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to reorder links:", error);
-    return { success: false, error: "Failed to reorder links" };
-  }
-}
-
-// ============= UPLOADS =============
-
-export async function uploadLinkIcon(base64: string, fileName: string) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const { uploadBase64ToS3 } = await import("@/lib/s3");
-    const url = await uploadBase64ToS3(base64, fileName);
-
-    return { success: true, url };
-  } catch (error) {
-    console.error("Failed to upload icon:", error);
-    return { success: false, error: "Failed to upload icon" };
-  }
-}
-
-export async function uploadLinkMedia(base64: string, fileName: string) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const { uploadBase64ToS3 } = await import("@/lib/s3");
-    const url = await uploadBase64ToS3(base64, fileName);
-
-    return { success: true, url };
-  } catch (error) {
-    console.error("Failed to upload media:", error);
-    return { success: false, error: "Failed to upload media" };
-  }
-}
-
-export async function uploadMedia(base64: string, fileName: string, type: "icon" | "media") {
-  try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user) return { success: false, error: "Unauthorized" };
-
-    // 1. Optimize
-    const optimizedBuffer = await optimizeImage(base64, type);
-
-    // 2. Format FileName agar unik dan ekstensi jadi .webp
-    const cleanName = `${Date.now()}-${fileName.split(".")[0]}.webp`;
-    const folder = type === "icon" ? "icons" : "media";
-
-    // 3. Upload ke S3 (Gunakan buffer, bukan base64 string lagi untuk efisiensi)
-    const url = await uploadToS3(optimizedBuffer, `${folder}/${cleanName}`, "image/webp");
-
-    return { success: true, url };
-  } catch (error: any) {
-    console.error("Upload error:", error);
-    return { success: false, error: error.message || "Processing failed" };
-  }
-}
+  revalidatePath(`/${user.username}`);
+  return { success: true };
+});

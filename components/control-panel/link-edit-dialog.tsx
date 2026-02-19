@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Link as LinkIcon, CreditCard, Image as ImageIcon, X } from "lucide-react";
+import { Loader2, Plus, Link as LinkIcon, Image as ImageIcon, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { updateLink, uploadMedia } from "@/server/user/links/actions";
+import { getUploadUrl } from "@/server/upload/actions";
+import { compressImage } from "@/lib/media";
 import { toast } from "sonner";
 
 type LinkType = "url" | "payment" | "media";
@@ -75,7 +76,7 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
   }, [link]);
 
   const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/x-icon", "image/vnd.microsoft.icon", "image/svg+xml", "image/jpg"];
@@ -84,42 +85,62 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const result = reader.result as string;
-      setIconPreview(result);
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size too large (max 5MB)");
+      return;
+    }
 
-      const uploadToast = toast.loading("Uploading icon...");
+    const uploadToast = toast.loading("Compressing & Uploading icon...");
 
-      try {
-        const uploadResult = await uploadMedia(result, file.name, "icon");
-        if (uploadResult.success && uploadResult.url) {
-          const updatedData = { ...editData, icon: uploadResult.url };
-          setEditData(updatedData);
-
-          // Immediately update the link in the store to trigger isDirty
-          if (link) {
-            onSave({
-              ...link,
-              icon: uploadResult.url,
-            });
-          }
-
-          toast.success("Icon uploaded and applied to draft!", { id: uploadToast });
-        } else {
-          toast.error(uploadResult.error || "Failed to upload icon", { id: uploadToast });
-          setIconPreview(editData.icon);
+    try {
+      // 1. Client-side Compression (skip for ICO/SVG)
+      if (!file.type.includes("svg") && !file.type.includes("icon")) {
+        try {
+          const compressed = await compressImage(file, {
+            maxSizeMB: 0.1,
+            maxWidthOrHeight: 256,
+          });
+          file = compressed;
+        } catch (err) {
+          console.warn("Compression failed, using original", err);
         }
-      } catch (error) {
-        toast.error("Error uploading icon", { id: uploadToast });
-        setIconPreview(editData.icon);
       }
-    };
-    reader.readAsDataURL(file);
+
+      // 2. Get Presigned URL
+      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+
+      if (!success || !url) throw new Error(error || "Failed to get upload URL");
+
+      // 3. Upload to S3
+      const res = await fetch(url, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!res.ok) throw new Error("Failed to upload icon to S3");
+
+      const updatedData = { ...editData, icon: publicUrl! };
+      setEditData(updatedData);
+      setIconPreview(publicUrl!);
+
+      if (link) {
+        onSave({
+          ...link,
+          icon: publicUrl!,
+        });
+      }
+
+      toast.success("Icon uploaded and applied!", { id: uploadToast });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Error uploading icon", { id: uploadToast });
+      setIconPreview(editData.icon); // Revert preview
+    }
   };
 
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
@@ -128,43 +149,61 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const result = reader.result as string;
-      setMediaPreview(result);
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size too large (max 10MB)");
+      return;
+    }
 
-      const uploadToast = toast.loading("Uploading media...");
+    const uploadToast = toast.loading("Compressing & Uploading media...");
 
+    try {
+      // 1. Client-side Compression
       try {
-        const uploadResult = await uploadMedia(result, file.name, "media");
-        if (uploadResult.success && uploadResult.url) {
-          const updatedData = {
-            ...editData,
-            mediaUrl: uploadResult.url,
-            mediaType: "image" as const,
-          };
-          setEditData(updatedData);
-
-          // Immediately update the link in the store to trigger isDirty
-          if (link) {
-            onSave({
-              ...link,
-              mediaUrl: uploadResult.url,
-              mediaType: "image" as const,
-            });
-          }
-
-          toast.success("Media uploaded and applied to draft!", { id: uploadToast });
-        } else {
-          toast.error(uploadResult.error || "Failed to upload media", { id: uploadToast });
-          setMediaPreview(editData.mediaUrl);
-        }
-      } catch (error) {
-        toast.error("Error uploading media", { id: uploadToast });
-        setMediaPreview(editData.mediaUrl);
+        const compressed = await compressImage(file, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 800,
+        });
+        file = compressed;
+      } catch (err) {
+        console.warn("Compression failed, using original", err);
       }
-    };
-    reader.readAsDataURL(file);
+
+      // 2. Get Presigned URL
+      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+
+      if (!success || !url) throw new Error(error || "Failed to get upload URL");
+
+      // 3. Upload to S3
+      const res = await fetch(url, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!res.ok) throw new Error("Failed to upload media to S3");
+
+      const updatedData = {
+        ...editData,
+        mediaUrl: publicUrl!,
+        mediaType: "image" as const, // Explicitly cast
+      };
+      setEditData(updatedData);
+      setMediaPreview(publicUrl!);
+
+      if (link) {
+        onSave({
+          ...link,
+          mediaUrl: publicUrl!,
+          mediaType: "image",
+        });
+      }
+
+      toast.success("Media uploaded and applied!", { id: uploadToast });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Error uploading media", { id: uploadToast });
+      setMediaPreview(editData.mediaUrl);
+    }
   };
 
   const handlePaymentSelect = (provider: "stripe" | "lemonsqueezy") => {
@@ -207,7 +246,7 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
 
   const typeOptions = [
     { id: "url" as LinkType, icon: LinkIcon, label: "URL" },
-    { id: "payment" as LinkType, icon: CreditCard, label: "Payment" },
+    // { id: "payment" as LinkType, icon: CreditCard, label: "Payment" },
     { id: "media" as LinkType, icon: ImageIcon, label: "Media" },
   ];
 
@@ -261,7 +300,7 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
           {/* Dynamic Content */}
           {selectedType === "url" && <Input value={editData.url} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="https://example.com" className="h-10 text-sm" />}
 
-          {selectedType === "payment" && (
+          {/* {selectedType === "payment" && (
             <div className="flex gap-2">
               <button
                 onClick={() => handlePaymentSelect("stripe")}
@@ -276,7 +315,7 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
                 Lemon Squeezy
               </button>
             </div>
-          )}
+          )} */}
 
           {selectedType === "media" && (
             <div className="relative">

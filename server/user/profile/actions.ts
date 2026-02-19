@@ -1,195 +1,114 @@
-// server/user/profile/actions.ts
 "use server";
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { ProfileSchema, ProfileInput } from "./schema";
-import { profileEditorPayload } from "./payloads";
-import { findProfileByUserId } from "./queries";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { ProfileLayout } from "@/lib/generated/prisma/enums";
+import { deleteFromS3 } from "@/lib/s3";
 
-async function getAuthenticatedUser() {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SaveAllProfileChangesInput {
+  displayName?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  layout?: string | null;
+  bgType?: string | null;
+  bgColor?: string | null;
+  bgGradientFrom?: string | null;
+  bgGradientTo?: string | null;
+  bgWallpaper?: string | null;
+  bgImage?: string | null;
+  bgEffects?: { blur: number; noise: number; brightness: number; saturation: number; contrast: number } | null;
+  bgPattern?: { type: string; color: string; opacity: number; thickness: number; scale: number } | null;
+  cardTexture?: string | null;
+}
+
+// ─── Auth Helper ──────────────────────────────────────────────────────────────
+
+async function getSession() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) throw new Error("Unauthorized");
   return session.user;
 }
 
-// Helper to get profile ID by user ID - assuming single/primary profile for now
-async function getProfileIdOrThrow(userId: string) {
-  const profile = await db.profile.findFirst({ where: { userId } });
-  if (!profile) throw new Error("Profile not found");
-  return profile.id;
-}
+// ─── Actions ──────────────────────────────────────────────────────────────────
 
-import { deleteFromS3 } from "@/lib/s3";
-
-// ... existing imports
-
-export async function updateProfile(data: ProfileInput) {
+/**
+ * Saves all editor profile changes in a single DB round-trip.
+ * Replaces the old separate updateProfile / updateBackground / updateBackgroundEffects
+ * / updateBackgroundPattern / updateCardTexture calls that caused connection pool
+ * exhaustion on VPS when fired in parallel via Promise.all.
+ */
+export async function saveAllProfileChanges(data: SaveAllProfileChangesInput) {
   try {
-    const user = await getAuthenticatedUser();
-    const validatedData = ProfileSchema.parse(data);
+    const user = await getSession();
 
-    // 1. Get current profile to check for old avatar
     const currentProfile = await db.profile.findFirst({
       where: { userId: user.id },
       select: { id: true, avatarUrl: true },
     });
 
     if (!currentProfile) throw new Error("Profile not found");
-    const profileId = currentProfile.id;
 
-    // 2. Perform Update
+    // Build update payload — skip undefined fields to avoid overwriting with null
+    const updateData: Record<string, any> = {};
+    if (data.displayName !== undefined) updateData.displayName = data.displayName;
+    if (data.bio !== undefined) updateData.bio = data.bio;
+    if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
+    if (data.layout !== undefined) updateData.layout = data.layout;
+    if (data.bgType !== undefined) updateData.bgType = data.bgType;
+    if (data.bgColor !== undefined) updateData.bgColor = data.bgColor;
+    if (data.bgGradientFrom !== undefined) updateData.bgGradientFrom = data.bgGradientFrom;
+    if (data.bgGradientTo !== undefined) updateData.bgGradientTo = data.bgGradientTo;
+    if (data.bgWallpaper !== undefined) updateData.bgWallpaper = data.bgWallpaper;
+    if (data.bgImage !== undefined) updateData.bgImage = data.bgImage;
+    if (data.bgEffects != null) updateData.bgEffects = data.bgEffects;
+    if (data.bgPattern != null) updateData.bgPattern = data.bgPattern;
+    if (data.cardTexture !== undefined) updateData.cardTexture = data.cardTexture;
+
     await db.profile.update({
-      where: { id: profileId },
-      data: validatedData,
+      where: { id: currentProfile.id },
+      data: updateData,
     });
 
-    // 3. Cleanup Old Avatar (Non-blocking)
-    if (currentProfile.avatarUrl && validatedData.avatarUrl && currentProfile.avatarUrl !== validatedData.avatarUrl) {
-      // Don't await this, let it run in background or handle error silently
-      deleteFromS3(currentProfile.avatarUrl).catch((err) => console.error("Failed to delete old avatar:", err));
+    // Non-blocking S3 cleanup for old avatar
+    if (data.avatarUrl && currentProfile.avatarUrl && currentProfile.avatarUrl !== data.avatarUrl) {
+      deleteFromS3(currentProfile.avatarUrl).catch(console.error);
     }
 
-    revalidatePath("/dashboard");
     revalidatePath(`/${user.username}`);
-
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to update profile" };
+    console.error("[profile/actions] saveAllProfileChanges:", error);
+    return { success: false, error: error.message || "Failed to save profile" };
   }
 }
 
-export async function updateLayout(layout: ProfileLayout) {
-  try {
-    const user = await getAuthenticatedUser();
-    const profileId = await getProfileIdOrThrow(user.id);
-
-    const updated = await db.profile.update({
-      where: { id: profileId },
-      data: { layout },
-      select: profileEditorPayload,
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${user.username}`);
-
-    return { success: true, data: updated };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to update layout" };
-  }
-}
-
-export async function updateCardTexture(cardTexture: "base" | "glassy") {
-  try {
-    const user = await getAuthenticatedUser();
-    const profileId = await getProfileIdOrThrow(user.id);
-
-    await db.profile.update({
-      where: { id: profileId },
-      data: { cardTexture },
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${user.username}`);
-
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to update card texture" };
-  }
-}
-
+/**
+ * Updates the active theme. Called directly from ThemeSelector component
+ * (outside the main Save flow, so it remains a standalone action).
+ */
 export async function updateTheme(theme: string) {
   try {
-    const user = await getAuthenticatedUser();
-    const profileId = await getProfileIdOrThrow(user.id);
+    const user = await getSession();
+
+    const profile = await db.profile.findFirst({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+
+    if (!profile) throw new Error("Profile not found");
 
     await db.profile.update({
-      where: { id: profileId },
+      where: { id: profile.id },
       data: { theme },
     });
 
-    revalidatePath("/dashboard");
     revalidatePath(`/${user.username}`);
-
     return { success: true };
   } catch (error: any) {
+    console.error("[profile/actions] updateTheme:", error);
     return { success: false, error: error.message || "Failed to update theme" };
-  }
-}
-
-export async function updateBackground(data: { bgType?: "color" | "gradient" | "wallpaper" | "image"; bgColor?: string; bgGradientFrom?: string | null; bgGradientTo?: string | null; bgWallpaper?: string | null; bgImage?: string | null }) {
-  try {
-    const user = await getAuthenticatedUser();
-    const profileId = await getProfileIdOrThrow(user.id);
-
-    await db.profile.update({
-      where: { id: profileId },
-      data,
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${user.username}`);
-
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to update background" };
-  }
-}
-
-export async function updateBackgroundEffects(effects: { blur: number; noise: number; brightness: number; saturation: number; contrast: number }) {
-  try {
-    const user = await getAuthenticatedUser();
-    const profileId = await getProfileIdOrThrow(user.id);
-
-    await db.profile.update({
-      where: { id: profileId },
-      data: { bgEffects: effects },
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${user.username}`);
-
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to update effects" };
-  }
-}
-
-export async function updateBackgroundPattern(pattern: { type: string; color: string; opacity: number; thickness: number; scale: number }) {
-  try {
-    const user = await getAuthenticatedUser();
-    const profileId = await getProfileIdOrThrow(user.id);
-
-    await db.profile.update({
-      where: { id: profileId },
-      data: { bgPattern: pattern },
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath(`/${user.username}`);
-
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to update pattern" };
-  }
-}
-
-export async function getProfile() {
-  try {
-    const user = await getAuthenticatedUser();
-
-    // Queries should be updated to handle non-unique userId too, but assuming findProfileByUserId is updated or we update it separately
-    const profile = await findProfileByUserId(user.id);
-
-    if (!profile) {
-      return { success: false, error: "Profile not found" };
-    }
-
-    return { success: true, data: profile };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to get profile" };
   }
 }
