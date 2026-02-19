@@ -89,6 +89,9 @@ importers:
       better-auth:
         specifier: ^1.4.9
         version: 1.4.12(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(mysql2@3.15.3)(next@16.1.1(@babel/core@7.28.6)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(pg@8.17.1)(prisma@7.2.0(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      browser-image-compression:
+        specifier: ^2.0.2
+        version: 2.0.2
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -128,9 +131,6 @@ importers:
       recharts:
         specifier: ^3.6.0
         version: 3.6.0(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react-is@16.13.1)(react@19.2.3)(redux@5.0.1)
-      sharp:
-        specifier: ^0.34.5
-        version: 0.34.5
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2124,6 +2124,9 @@ packages:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
+  browser-image-compression@2.0.2:
+    resolution: {integrity: sha512-pBLlQyUf6yB8SmmngrcOw3EoS4RpQ1BcylI3T9Yqn7+4nrQTXJD4sJDe5ODnJdrvNMaio5OicFo75rDyJD2Ucw==}
+
   browserslist@4.28.1:
     resolution: {integrity: sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -3770,6 +3773,9 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  uzip@0.20201231.0:
+    resolution: {integrity: sha512-OZeJfZP+R0z9D6TmBgLq2LHzSSptGMGDGigGiEe0pr8UBe/7fdflgHlHBNDASTXB5jnFuxHpNaJywSg8YFeGng==}
+
   valibot@1.2.0:
     resolution: {integrity: sha512-mm1rxUsmOxzrwnX5arGS+U4T25RdvpPjPN4yR0u9pUBov9+zGVtO84tif1eY4r6zWxVxu3KzIyknJy3rxfRZZg==}
     peerDependencies:
@@ -4706,7 +4712,8 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@img/colour@1.0.0': {}
+  '@img/colour@1.0.0':
+    optional: true
 
   '@img/sharp-darwin-arm64@0.34.5':
     optionalDependencies:
@@ -6254,6 +6261,10 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
+  browser-image-compression@2.0.2:
+    dependencies:
+      uzip: 0.20201231.0
+
   browserslist@4.28.1:
     dependencies:
       baseline-browser-mapping: 2.9.14
@@ -7789,6 +7800,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.34.5
       '@img/sharp-win32-ia32': 0.34.5
       '@img/sharp-win32-x64': 0.34.5
+    optional: true
 
   shebang-command@2.0.0:
     dependencies:
@@ -8082,6 +8094,8 @@ snapshots:
   use-sync-external-store@1.6.0(react@19.2.3):
     dependencies:
       react: 19.2.3
+
+  uzip@0.20201231.0: {}
 
   valibot@1.2.0(typescript@5.9.3):
     optionalDependencies:

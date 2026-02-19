@@ -1,33 +1,45 @@
-import sharp from "sharp";
+import imageCompression from "browser-image-compression";
 
-export async function optimizeImage(base64: string, type: "icon" | "media") {
-  const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,/);
-  if (!matches) throw new Error("Invalid base64 format");
+export interface CompressionOptions {
+  maxSizeMB?: number;
+  maxWidthOrHeight?: number;
+  useWebWorker?: boolean;
+  fileType?: string;
+}
 
-  const mimeType = matches[1];
-  const allowedMedia = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-  const allowedIcon = [...allowedMedia, "image/x-icon", "image/vnd.microsoft.icon", "image/svg+xml"];
+/**
+ * Compresses an image file on the client side using browser-image-compression.
+ * This offloads the processing work from the server to the user's browser.
+ */
+export async function compressImage(file: File, options: CompressionOptions = {}): Promise<File> {
+  const defaultOptions = {
+    maxSizeMB: 1, // Max file size in MB
+    maxWidthOrHeight: 1920, // Max width/height
+    useWebWorker: true, // Multi-threading
+    fileType: file.type === "image/png" ? "image/png" : "image/jpeg", // Preserve transparency only for PNG
+    initialQuality: 0.8, // Good balance of quality/size
+  };
 
-  if (type === "media" && !allowedMedia.includes(mimeType)) {
-    throw new Error("Invalid media format. Only JPG, PNG, and WebP are allowed.");
+  const config = { ...defaultOptions, ...options };
+
+  try {
+    const compressedFile = await imageCompression(file, config);
+    console.log(`Image compressed: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+    return compressedFile;
+  } catch (error) {
+    console.error("Image compression failed:", error);
+    throw error;
   }
+}
 
-  if (type === "icon" && !allowedIcon.includes(mimeType)) {
-    throw new Error("Invalid icon format. JPG, PNG, WebP, ICO, and SVG are allowed.");
-  }
-
-  const base64Data = base64.split(";base64,").pop();
-  if (!base64Data) throw new Error("Invalid base64 data");
-
-  const buffer = Buffer.from(base64Data, "base64");
-  let pipeline = sharp(buffer);
-
-  if (type === "icon") {
-    pipeline = pipeline.resize(128, 128, { fit: "cover" }).webp({ quality: 80 });
-  } else {
-    pipeline = pipeline.resize(1200, null, { withoutEnlargement: true }).webp({ quality: 75 });
-  }
-
-  const optimizedBuffer = await pipeline.toBuffer();
-  return optimizedBuffer;
+/**
+ * Helper to convert File to Base64 (useful for previews)
+ */
+export async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 }

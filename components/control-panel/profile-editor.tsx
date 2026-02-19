@@ -7,6 +7,7 @@ import type { ProfileEditorData } from "@/server/user/profile/payloads";
 import { getUploadUrl } from "@/server/upload/actions";
 import { toast } from "sonner";
 import { useState } from "react";
+import { compressImage } from "@/lib/media";
 
 interface ProfileEditorProps {
   profile: ProfileEditorData;
@@ -17,33 +18,39 @@ export function ProfileEditor({ profile, onUpdate }: ProfileEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image is too large (max 10MB)");
       return;
     }
 
     setIsUploading(true);
-    const uploadToast = toast.loading("Uploading avatar...");
+    const uploadToast = toast.loading("Compressing & Uploading...");
 
     try {
-      // 1. Get Presigned URL
+      try {
+        const compressed = await compressImage(file, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 800,
+        });
+        file = compressed;
+      } catch (compError) {
+        console.warn("Compression failed, using original file", compError);
+      }
+
       const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
 
       if (!success || !url) {
         throw new Error(error || "Failed to get upload URL");
       }
 
-      // 2. Upload directly to S3
       const uploadResponse = await fetch(url, {
         method: "PUT",
         body: file,

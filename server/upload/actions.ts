@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { uploadBase64ToS3 } from "@/lib/s3";
+import { uploadBase64ToS3, getPresignedUploadUrl } from "@/lib/s3";
 
 export async function uploadImage(base64: string, fileName: string) {
   try {
@@ -23,7 +23,6 @@ export async function uploadImage(base64: string, fileName: string) {
   }
 }
 
-import { getPresignedUploadUrl } from "@/lib/s3";
 
 export async function getUploadUrl(fileName: string, contentType: string) {
   try {
@@ -39,7 +38,6 @@ export async function getUploadUrl(fileName: string, contentType: string) {
       return { success: false, error: "Only images are allowed" };
     }
 
-    // Generate presigned URL
     const { url, publicUrl } = await getPresignedUploadUrl(fileName, contentType, "uploads");
 
     return { success: true, url, publicUrl };

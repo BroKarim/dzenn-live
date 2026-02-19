@@ -62,7 +62,11 @@ export default function EditorClient({ initialProfile }: EditorClientProps) {
       <EditorHeader profile={currentProfile} />
 
       <div className="flex flex-1 gap-6 overflow-hidden p-6">
-        <Preview profile={currentProfile} viewMode={viewMode} />
+        <div className="flex flex-1 justify-center items-start overflow-hidden pt-4">
+          <div className="w-full h-full flex flex-col scale-90 origin-top">
+            <Preview profile={currentProfile} viewMode={viewMode} />
+          </div>
+        </div>
         <ControlPanel profile={currentProfile} onUpdate={updateDraft} />
       </div>
 
