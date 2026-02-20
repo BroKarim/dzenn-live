@@ -152,3 +152,9 @@ Goal: Remove old profile pictures from S3 to save storage costs, but ONLY after 
 ## 4. Backend Refactoring (Clean Code)
 
 - **Fix:** Implemented `withAuth` HOF in `links/actions.ts` to centralize authentication, logging, and error handling, making server actions significantly cleaner and more robust.
+
+## 5. Data Loss on Tab Switch (Store Reset)
+
+- **Problem:** User edits (especially for new accounts) were wiped when switching tabs or during RSC re-renders.
+- **Cause:** `initializeEditor` had overly strict validation logic. Deep comparison mismatches (like `null` vs `undefined`) or aggressive link validation would trigger a draft reset even for valid user edits.
+- **Fix:** Rewrote `initializeEditor` with a fail-safe early-return pattern. It now prioritizes preserving the `draftProfile` and only resets if the data is truly stale (wrong user ID or deleted link IDs). All other updates now synchronize the server profile without wiping the user's draft.

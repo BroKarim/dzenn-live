@@ -30,21 +30,39 @@ export const useEditorStore = create<EditorState>()(
         const state = get();
         if (!state._hasHydrated) return;
 
-        // Always update originalProfile with fresh data from the server.
-        // This ensures DB-side changes (created IDs, deletions) are always reflected.
+        const { draftProfile } = state;
+
+        // Case 1: No existing draft — initialize fresh from server
+        if (!draftProfile) {
+          set({ originalProfile: serverProfile, draftProfile: serverProfile, isDirty: false });
+          return;
+        }
+
+        // Case 2: Draft belongs to a different profile (e.g. user switched account)
+        if (draftProfile.id !== serverProfile.id) {
+          set({ originalProfile: serverProfile, draftProfile: serverProfile, isDirty: false });
+          return;
+        }
+
+        // Case 3: Draft contains stale link IDs that no longer exist in the DB.
+        // This happens after a failed duplicate-save scenario (see NOTE in TODO.md).
+        // We detect "stale" as a non-temp ID that isn't in the server's current link list.
         const serverLinkIds = new Set((serverProfile.links ?? []).map((l) => l.id));
-        const draftProfile = state.draftProfile;
+        const hasStaleLinks = (draftProfile.links ?? []).some((l) => !String(l.id).startsWith("temp-") && !serverLinkIds.has(l.id));
 
-        // Determine if there's a valid pending draft to restore:
-        // A draft is valid only if ALL its link IDs exist in the current server state.
-        // After a successful save, real IDs are always committed to the store (no temp-IDs survive).
-        // So any temp-ID found in a cached draft means it's stale — discard it.
-        const hasDirtyDraft = draftProfile !== null && draftProfile.id === serverProfile.id && JSON.stringify(draftProfile) !== JSON.stringify(serverProfile) && (draftProfile.links ?? []).every((l) => serverLinkIds.has(l.id));
+        if (hasStaleLinks) {
+          set({ originalProfile: serverProfile, draftProfile: serverProfile, isDirty: false });
+          return;
+        }
 
+        // Draft is valid — keep the user's in-progress edits as-is.
+        // Always update originalProfile to the latest server snapshot so that
+        // save diffs are calculated correctly on the next Save.
+        const hasDirtyChanges = JSON.stringify(draftProfile) !== JSON.stringify(serverProfile);
         set({
           originalProfile: serverProfile,
-          draftProfile: hasDirtyDraft ? draftProfile : serverProfile,
-          isDirty: hasDirtyDraft,
+          draftProfile, // preserve existing draft
+          isDirty: hasDirtyChanges,
         });
       },
 
