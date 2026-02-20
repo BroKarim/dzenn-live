@@ -32,7 +32,6 @@ export function ProfileEditor({ profile, onUpdate }: ProfileEditorProps) {
     }
 
     setIsUploading(true);
-    const uploadToast = toast.loading("Compressing & Uploading...");
 
     try {
       try {
@@ -68,11 +67,9 @@ export function ProfileEditor({ profile, onUpdate }: ProfileEditorProps) {
         ...profile,
         avatarUrl: publicUrl!,
       });
-
-      toast.success("Avatar uploaded successfully", { id: uploadToast });
     } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error(error.message || "Failed to upload avatar", { id: uploadToast });
+      toast.error(error.message || "Failed to upload avatar");
     } finally {
       setIsUploading(false);
     }

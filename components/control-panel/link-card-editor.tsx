@@ -60,8 +60,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       return;
     }
 
-    const uploadToast = toast.loading("Compressing & Uploading icon...");
-
     try {
       // 1. Client-side Compression (skip for ICO/SVG)
       if (!file.type.includes("svg") && !file.type.includes("icon")) {
@@ -92,11 +90,9 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
       setNewLink({ ...newLink, icon: publicUrl! });
       setLogoPreview(publicUrl!); // Preview directly from S3 URL or creating object URL is better, but this works if publicUrl is fast
-
-      toast.success("Icon uploaded!", { id: uploadToast });
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Error uploading icon", { id: uploadToast });
+      toast.error(error.message || "Error uploading icon");
       setLogoPreview(null);
     }
   };
@@ -115,8 +111,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       toast.error("Image size too large (max 10MB)");
       return;
     }
-
-    const uploadToast = toast.loading("Compressing & Uploading media...");
 
     try {
       // 1. Client-side Compression
@@ -150,11 +144,9 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
         mediaType: "image",
       });
       setMediaPreview(publicUrl!);
-
-      toast.success("Media uploaded!", { id: uploadToast });
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Error uploading media", { id: uploadToast });
+      toast.error(error.message || "Error uploading media");
       setMediaPreview(null);
     }
   };
@@ -165,7 +157,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       paymentProvider: provider,
       paymentAccountId: "dummy-account-id",
     });
-    toast.success(`Connected with ${provider === "stripe" ? "Stripe" : "Lemon Squeezy"}`);
   };
 
   const handleAdd = async () => {
@@ -194,7 +185,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
     }
 
     onUpdate({ ...profile, links: [...profile.links, payload] });
-    toast.success("Link added to preview");
     resetForm();
   };
 
@@ -203,7 +193,6 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       ...profile,
       links: profile.links.filter((l) => l.id !== id),
     });
-    toast.success("Link removed from preview");
   };
 
   const resetForm = () => {

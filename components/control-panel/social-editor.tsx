@@ -46,7 +46,6 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
     if (editingId) {
       const updatedSocials = profile.socials.map((s) => (s.id === editingId ? { ...s, platform: selectedPlatform, url } : s));
       onUpdate({ ...profile, socials: updatedSocials });
-      toast.success("Changes applied to preview");
     } else {
       const newSocial = {
         id: `temp-${Date.now()}`,
@@ -55,7 +54,6 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
         position: profile.socials.length,
       };
       onUpdate({ ...profile, socials: [...profile.socials, newSocial as any] });
-      toast.success("Added to preview");
     }
     resetForm();
   };
@@ -65,7 +63,6 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
       ...profile,
       socials: profile.socials.filter((s) => s.id !== id),
     });
-    toast.success("Social link removed from preview");
   };
 
   const filteredPlatforms = SOCIAL_PLATFORMS.filter((p) => p.label.toLowerCase().includes(searchQuery.toLowerCase()));

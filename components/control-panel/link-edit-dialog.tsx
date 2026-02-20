@@ -90,8 +90,6 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
       return;
     }
 
-    const uploadToast = toast.loading("Compressing & Uploading icon...");
-
     try {
       // 1. Client-side Compression (skip for ICO/SVG)
       if (!file.type.includes("svg") && !file.type.includes("icon")) {
@@ -130,11 +128,9 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
           icon: publicUrl!,
         });
       }
-
-      toast.success("Icon uploaded and applied!", { id: uploadToast });
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Error uploading icon", { id: uploadToast });
+      toast.error(error.message || "Error uploading icon");
       setIconPreview(editData.icon); // Revert preview
     }
   };
@@ -153,8 +149,6 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
       toast.error("Image size too large (max 10MB)");
       return;
     }
-
-    const uploadToast = toast.loading("Compressing & Uploading media...");
 
     try {
       // 1. Client-side Compression
@@ -197,11 +191,9 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
           mediaType: "image",
         });
       }
-
-      toast.success("Media uploaded and applied!", { id: uploadToast });
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Error uploading media", { id: uploadToast });
+      toast.error(error.message || "Error uploading media");
       setMediaPreview(editData.mediaUrl);
     }
   };
@@ -212,7 +204,6 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
       paymentProvider: provider,
       paymentAccountId: "dummy-account-id",
     });
-    toast.success(`Connected with ${provider === "stripe" ? "Stripe" : "Lemon Squeezy"}`);
   };
 
   const handleSave = async () => {
@@ -240,7 +231,6 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
 
     // Just update the local state, don't save to DB yet
     onSave({ ...link, ...payload });
-    toast.success("Changes applied to preview");
     onOpenChange(false);
   };
 
