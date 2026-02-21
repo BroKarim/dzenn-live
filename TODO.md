@@ -37,52 +37,50 @@ File ini berisi daftar fitur dan logika dari folder `app/api/` yang harus diimpl
 
 # 🗄️ Database Migration (Supabase -> Self-hosted Postgres)
 
+_(Completed ✅)_
+
 Goal: Migrate from Supabase (cloud) to a self-hosted PostgreSQL instance on the VPS running in Docker. Since you want to continue using Prisma, this is fully supported; only the connection string (`DATABASE_URL`) changes.
 
 ## 1. Preparation (Local/Supabase)
 
-- [ ] **Export Data:**
+- [x] **Export Data:**
   - Export data via Supabase Dashboard (SQL Editor) or `pg_dump` since the dataset is small.
   - Ensure the export includes Schema + Data.
-- [ ] **Verify Dump:** Check the SQL file to ensure all tables (`User`, `Profile`, `Link`, etc.) are included.
+- [x] **Verify Dump:** Check the SQL file to ensure all tables (`User`, `Profile`, `Link`, etc.) are included.
 
 ## 2. VPS Setup (Docker)
 
-- [ ] **Setup Postgres Container:**
+- [x] **Setup Postgres Container:**
   - Create a `docker-compose.yml` (recommended) or run a standalone `postgres` container.
   - Configure persistent volume mapping (e.g., `./pgdata:/var/lib/postgresql/data`) so data survives container restarts.
   - Set environment variables (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`).
-- [ ] **Network Configuration:**
+- [x] **Network Configuration:**
   - Ensure the `dzenn-app` container and new `postgres` container share a Docker network so they can communicate via hostname (e.g., `postgres`).
 
 ## 3. Data Import
 
-- [ ] **Copy & Import:**
+- [x] **Copy & Import:**
   - SCP or copy the SQL dump file to the VPS.
-  - Execute the SQL file against the new Postgres container:
-    ```bash
-    cat backup.sql | docker exec -i <postgres-container-name> psql -U <user> -d <dbname>
-    ```
+  - Execute the SQL file against the new Postgres container.
 
 ## 4. Application Configuration
 
-- [ ] **Update Environment Variables:**
+- [x] **Update Environment Variables:**
   - Modify `.env` on VPS.
-  - Update `DATABASE_URL` to point to the local container:
-    `postgresql://user:pass@postgres_container_name:5432/dbname`
-  - Ensure `DIRECT_URL` is also updated (usually same as `DATABASE_URL` for self-hosted).
-- [ ] **Refactor `lib/db.ts`:**
+  - Update `DATABASE_URL` to point to the local container.
+  - Ensure `DIRECT_URL` is also updated.
+- [x] **Refactor `lib/db.ts`:**
   - **Important:** Remove `@prisma/adapter-neon` usage.
   - Switch to standard `new PrismaClient()` initialization since we are running on a VPS (Serverful) with direct TCP connection to Docker Postgres.
   - Standard Postgres connection is more stable and performant for this setup than the serverless adapter.
-- [ ] **Prisma Check:**
+- [x] **Prisma Check:**
   - Verify that the schema in the DB matches `prisma/schema.prisma`.
   - Run `npx prisma db push` or `migrate deploy` if needed.
 
 ## 5. Switch Over
 
-- [ ] **Restart App:** Redeploy or restart the app container to pick up the new database connection.
-- [ ] **Validation:** Check logs for connection errors and verify data consistency.
+- [x] **Restart App:** Redeploy or restart the app container to pick up the new database connection.
+- [x] **Validation:** Check logs for connection errors and verify data consistency.
 
 ---
 
@@ -132,29 +130,73 @@ Goal: Remove old profile pictures from S3 to save storage costs, but ONLY after 
 
 ---
 
-# 🐛 Bug Fixes & Stability Optimizations
+# �️ Server Reliability & Security (VPS 2GB Optimization)
 
-## 1. Intermittent "Failed to Save" (Connection Pool Exhaustion)
+To prevent resource exhaustion and ensure high availability on limited hardware.
 
-- **Problem:** `Promise.all` fired 5+ parallel HTTP requests for a single "Save Changes" click, exhausting the VPS database connection pool.
-- **Fix:** Consolidated 5 profile actions into one `saveAllProfileChanges` server action. Reduced DB round-trips from 5 → 1.
+# 🛠️ Server Reliability & Security (VPS 2GB Optimization)
 
-## 2. Duplicate Links & Persistent Corrupt State
+Strategi optimasi untuk memastikan aplikasi tetap ringan, stabil, dan aman pada hardware terbatas (RAM 2GB).
 
-- **Problem:** Corrupted `draftProfile` was persisting in `localStorage`. The store favored stale local drafts over fresh server data upon refresh.
-- **Fix:** Refactored `editor-store.ts` to always update with server data and only restore drafts if all link IDs are still valid in the DB.
+---
 
-## 3. Prisma P2025 Error on Reorder/Delete
+## 1. Media Handling Optimization (Zero-Load Strategy)
 
-- **Problem:** `db.link.update` throws a fatal error if a record is missing (race condition).
-- **Fix:** Replaced with `db.link.updateMany` and `db.link.deleteMany`, which handle missing records gracefully without crashing the transaction.
+**Masalah:** VPS mengalami Out of Memory (OOM) saat menghandle upload gambar berukuran besar.
+**Solusi:** Memindahkan beban pemrosesan dari Server ke Client dan AWS S3.
 
-## 4. Backend Refactoring (Clean Code)
+### A. Direct Upload (S3 Presigned URLs)
+- **Konsep:** Browser meminta URL sementara ke server, lalu upload langsung ke S3 tanpa melewati Next.js (VPS).
+- **Keuntungan:** Beban RAM/CPU VPS 0% untuk proses upload.
+- **Konfigurasi CORS:** S3 Bucket diatur untuk mengizinkan `PUT` method dari `https://dzenn.live` dan `http://localhost:3000`.
 
-- **Fix:** Implemented `withAuth` HOF in `links/actions.ts` to centralize authentication, logging, and error handling, making server actions significantly cleaner and more robust.
+### B. Client-Side Compression
+- **Library:** `browser-image-compression`.
+- **Logic:** Gambar dikompres ke ukuran < 1MB dan resolusi max 1080px di browser user sebelum dikirim ke S3.
+- **Efek:** Hemat kuota S3, hemat bandwidth user, dan proses upload lebih cepat.
 
-## 5. Data Loss on Tab Switch (Store Reset)
 
-- **Problem:** User edits (especially for new accounts) were wiped when switching tabs or during RSC re-renders.
-- **Cause:** `initializeEditor` had overly strict validation logic. Deep comparison mismatches (like `null` vs `undefined`) or aggressive link validation would trigger a draft reset even for valid user edits.
-- **Fix:** Rewrote `initializeEditor` with a fail-safe early-return pattern. It now prioritizes preserving the `draftProfile` and only resets if the data is truly stale (wrong user ID or deleted link IDs). All other updates now synchronize the server profile without wiping the user's draft.
+
+---
+
+## 2. Offsite Backup Strategy (Anti-Data Loss)
+
+**Goal:** Mengirim dump database yang terkompresi langsung ke Cloud Storage (S3) tanpa membebani resource server saat jam sibuk.
+
+### A. Tools & Security
+- **Rclone:** Digunakan sebagai "kurir" untuk transfer file ke S3 dengan nama remote `s3-backup`.
+- **Security:** Environment Variables diambil dari `/root/dzenn/.env` (menggunakan `chmod 600`) untuk menghindari hardcoded password di dalam script.
+- **Resource Priority:** Menggunakan `nice -n 19` (CPU) dan `ionice -c 3` (Disk I/O) agar proses backup tidak mengganggu performa website.
+
+### B. Backup Workflow (`/root/scripts/backup-db.sh`)
+1. **Dump:** Mengambil data dari docker container `dzenn-postgres`.
+2. **Stream Compression:** Hasil dump langsung di-pipe ke `gzip` untuk meminimalkan penggunaan disk lokal.
+3. **Cloud Transfer:** Menggunakan `rclone move` dengan flag `--s3-no-check-bucket` untuk mengatasi error location constraint.
+4. **Notification:** Integrasi Discord Webhook untuk laporan **SUCCESS** atau **FAILURE** secara real-time.
+
+### C. Automation (Cron Job)
+Dijalankan otomatis setiap hari jam 02:00 pagi:
+```bash
+0 2 * * * /bin/bash /root/scripts/backup-db.sh > /root/scripts/backup.log 2>&1
+
+Lokasi Script : 	/root/scripts/backup-db.sh
+Cek Backup di Cloud	: rclone ls s3-backup:brokarim-link-bio/backups/
+Jalankan Backup Manual : 	bash /root/scripts/backup-db.sh
+Cek Log Backup : 	cat /root/scripts/backup.log
+Lokasi Rahasia (.env)	/root/dzenn/.env
+
+
+## 2. Security Hardening
+
+- [ ] **Firewall (UFW):**
+  - **Critical:** Close port 5432 (Postgres) from public access.
+  - Allow only minimal ports: 80, 443, 22.
+- [ ] **Docker Log Rotation:**
+  - Configure `max-size: "10m"` for container logs to prevent disk fill-up.
+
+## 3. Resource Monitoring (Free Tier)
+
+- [ ] **Uptime Monitor:**
+  - Setup UptimeRobot pointing to `https://dzenn.live/api/health`.
+- [ ] **Memory Watchdog:**
+  - Simple script to restart app container if RAM usage > 90% (OOM prevention).
