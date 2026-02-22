@@ -40,17 +40,13 @@ export function ProfileView({ user: profile }: { user: any }) {
         } as React.CSSProperties
       }
     >
-      {/* Background layer */}
       <PreviewBackground profile={profile} />
 
-      {/* Main Content Container */}
       <div className="relative z-10 min-h-screen" style={{ padding: `${profile.padding || 32}px` }}>
-        {/* Header - Positioned absolutely at top */}
         <div className="absolute top-0 left-0 right-0 z-20 px-6 pt-8">
           <ProfileHeaderButtons name={profile.user?.name} username={profile.username} avatarUrl={avatarUrl} />
         </div>
 
-        {/* Scrollable Content */}
         <div className="mx-auto flex w-full max-w-[420px] flex-col items-center pb-24 pt-12 space-y-4">
           <PreviewProfile profile={profile} isFullBio={true} />
           <PreviewSocials profile={profile} />

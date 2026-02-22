@@ -29,7 +29,7 @@ export default function InfoPage() {
             We provide the tools—you provide the vibes.
           </p>
           <div className="mt-8 flex w-full justify-center gap-6">
-            <Link href="https://github.com/BroKarim" className="text-black hover:text-zinc-600 text-xs font-medium transition-colors underline underline-offset-4">
+            <Link href="https://github.com/BroKarim/dzenn-live" className="text-black hover:text-zinc-600 text-xs font-medium transition-colors underline underline-offset-4">
               GitHub
             </Link>
             <Link href="https://x.com/BroKariim" className="text-black hover:text-zinc-600 text-xs font-medium transition-colors underline underline-offset-4">
