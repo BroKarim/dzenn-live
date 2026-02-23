@@ -1,0 +1,5 @@
+{
+  "ignore": {
+    "files": [".vscode/**", "node_modules/**", "prisma/**", ".next/**", "public/**"]
+  }
+}
