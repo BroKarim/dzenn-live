@@ -24,7 +24,9 @@ interface PagesSectionProps {
   timeAnalysis?: TimeAnalysisItem[];
 }
 
-export function PagesSection({ link, timeAnalysis = [] }: PagesSectionProps) {
+const EMPTY_TIME_ANALYSIS: TimeAnalysisItem[] = [];
+
+export function PagesSection({ link, timeAnalysis = EMPTY_TIME_ANALYSIS }: PagesSectionProps) {
   if (!link) return null;
 
   return (

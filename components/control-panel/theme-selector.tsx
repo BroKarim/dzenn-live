@@ -17,12 +17,27 @@ interface ThemeSelectorProps {
   onUpdate: (profile: ProfileEditorData) => void;
 }
 
+interface ThemeIconProps {
+  theme: ProfileTheme;
+  className?: string;
+}
+
+function ThemeIcon({ theme, className }: ThemeIconProps) {
+  if (theme.icon && Icons[theme.icon as keyof typeof Icons]) {
+    const Icon = Icons[theme.icon as keyof typeof Icons];
+    return <Icon className={cn("h-4 w-4 shrink-0", className)} />;
+  }
+  return <div className={cn("h-4 w-4 shrink-0 rounded-full border border-black/5 dark:border-white/10 shadow-sm", className)} style={{ background: theme.variables["--primary"] || theme.variables["--foreground"] }} />;
+}
+
 // Extract theme item to separate component for better performance
-function ThemeItem({ theme, isActive, onSelect, renderIcon }: { theme: ProfileTheme & { fontName: string }; isActive: boolean; onSelect: () => void; renderIcon: (theme: ProfileTheme, className?: string) => React.ReactElement }) {
+function ThemeItem({ theme, isActive, onSelect }: { theme: ProfileTheme & { fontName: string }; isActive: boolean; onSelect: () => void }) {
   return (
     <button onClick={onSelect} className={cn("w-full flex items-center justify-between gap-3 p-2.5 rounded-lg transition-all text-left", "hover:bg-zinc-100 dark:hover:bg-zinc-800/80", isActive && "bg-zinc-100/80 dark:bg-zinc-800/50")}>
       <div className="flex items-center gap-3">
-        <div className={cn("p-2 rounded-lg transition-colors", isActive ? "bg-white dark:bg-zinc-950 shadow-sm border border-zinc-200 dark:border-zinc-700" : "bg-zinc-100 dark:bg-zinc-900")}>{renderIcon(theme, "h-4 w-4")}</div>
+        <div className={cn("p-2 rounded-lg transition-colors", isActive ? "bg-white dark:bg-zinc-950 shadow-sm border border-zinc-200 dark:border-zinc-700" : "bg-zinc-100 dark:bg-zinc-900")}>
+          <ThemeIcon theme={theme} className="h-4 w-4" />
+        </div>
         <div className="flex flex-col">
           <span className={cn("text-sm font-medium", isActive ? "text-foreground" : "text-muted-foreground")}>{theme.name}</span>
           <span className="text-[10px] text-muted-foreground/60 capitalize leading-none pt-0.5">{theme.fontName}</span>
@@ -57,14 +72,6 @@ export function ThemeSelector({ profile, onUpdate }: ThemeSelectorProps) {
     };
   }, [profile.theme]);
 
-  const renderIcon = (theme: ProfileTheme, className?: string) => {
-    if (theme.icon && Icons[theme.icon as keyof typeof Icons]) {
-      const Icon = Icons[theme.icon as keyof typeof Icons];
-      return <Icon className={cn("h-4 w-4 shrink-0", className)} />;
-    }
-    return <div className={cn("h-4 w-4 shrink-0 rounded-full border border-black/5 dark:border-white/10 shadow-sm", className)} style={{ background: theme.variables["--primary"] || theme.variables["--foreground"] }} />;
-  };
-
   // Pre-compute themes with font names to avoid repeated string operations
   const themesWithFontNames = useMemo(
     () =>
@@ -93,7 +100,9 @@ export function ThemeSelector({ profile, onUpdate }: ThemeSelectorProps) {
             className="w-full h-12 justify-between bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-[0.98]"
           >
             <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-primary/10 text-primary">{renderIcon(currentTheme, "h-4 w-4")}</div>
+              <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <ThemeIcon theme={currentTheme} className="h-4 w-4" />
+              </div>
               <div className="flex flex-col items-start leading-tight">
                 <span className="text-sm font-semibold">{currentTheme.name}</span>
                 <span className="text-[10px] text-muted-foreground opacity-70 uppercase tracking-tighter transition-all">Typography Preset</span>
@@ -111,7 +120,7 @@ export function ThemeSelector({ profile, onUpdate }: ThemeSelectorProps) {
           </div>
           <div className="max-h-[350px] overflow-y-auto p-1 custom-scrollbar">
             {themesWithFontNames.map((theme) => (
-              <ThemeItem key={theme.id} theme={theme} isActive={profile.theme === theme.id} onSelect={() => handleThemeSelect(theme.id)} renderIcon={renderIcon} />
+              <ThemeItem key={theme.id} theme={theme} isActive={profile.theme === theme.id} onSelect={() => handleThemeSelect(theme.id)} />
             ))}
           </div>
         </PopoverContent>

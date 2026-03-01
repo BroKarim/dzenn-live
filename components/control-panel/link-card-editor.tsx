@@ -24,15 +24,17 @@ interface LinkCardEditorProps {
 type LinkType = "url" | "payment" | "media";
 
 export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [selectedType, setSelectedType] = useState<LinkType>("url");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const [editingLink, setEditingLink] = useState<any | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [uiState, setUiState] = useState({
+    isAdding: false,
+    isSaving: false,
+    selectedType: "url" as LinkType,
+    deleteDialogOpen: false,
+    deletingId: null as string | null,
+    logoPreview: null as string | null,
+    mediaPreview: null as string | null,
+    editingLink: null as any | null,
+    editDialogOpen: false,
+  });
 
   const [newLink, setNewLink] = useState({
     title: "",
@@ -75,9 +77,14 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       }
 
       // 2. Get Presigned URL
-      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+      const uploadRes = await getUploadUrl(file.name, file.type);
+      const url = uploadRes.url;
+      const publicUrl = uploadRes.publicUrl;
 
-      if (!success || !url) throw new Error(error || "Failed to get upload URL");
+      if (!uploadRes.success || !url) {
+        const fallbackMsg = uploadRes.error || "Failed to get upload URL";
+        throw new Error(fallbackMsg);
+      }
 
       // 3. Upload to S3
       const res = await fetch(url, {
@@ -89,11 +96,11 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       if (!res.ok) throw new Error("Failed to upload icon to S3");
 
       setNewLink({ ...newLink, icon: publicUrl! });
-      setLogoPreview(publicUrl!); // Preview directly from S3 URL or creating object URL is better, but this works if publicUrl is fast
+      setUiState((prev) => ({ ...prev, logoPreview: publicUrl! }));
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Error uploading icon");
-      setLogoPreview(null);
+      setUiState((prev) => ({ ...prev, logoPreview: null }));
     }
   };
 
@@ -125,12 +132,17 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
       }
 
       // 2. Get Presigned URL
-      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+      const mediaUploadRes = await getUploadUrl(file.name, file.type);
+      const mediaUrl = mediaUploadRes.url;
+      const mediaPublicUrl = mediaUploadRes.publicUrl;
 
-      if (!success || !url) throw new Error(error || "Failed to get upload URL");
+      if (!mediaUploadRes.success || !mediaUrl) {
+        const fallbackMsg = mediaUploadRes.error || "Failed to get upload URL";
+        throw new Error(fallbackMsg);
+      }
 
       // 3. Upload to S3
-      const res = await fetch(url, {
+      const res = await fetch(mediaUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
@@ -140,14 +152,14 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
       setNewLink({
         ...newLink,
-        mediaUrl: publicUrl!,
+        mediaUrl: mediaPublicUrl!,
         mediaType: "image",
       });
-      setMediaPreview(publicUrl!);
+      setUiState((prev) => ({ ...prev, mediaPreview: mediaPublicUrl! }));
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Error uploading media");
-      setMediaPreview(null);
+      setUiState((prev) => ({ ...prev, mediaPreview: null }));
     }
   };
 
@@ -196,10 +208,13 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
   };
 
   const resetForm = () => {
-    setIsAdding(false);
-    setSelectedType("url");
-    setLogoPreview(null);
-    setMediaPreview(null);
+    setUiState((prev) => ({
+      ...prev,
+      isAdding: false,
+      selectedType: "url",
+      logoPreview: null,
+      mediaPreview: null,
+    }));
     setNewLink({
       title: "",
       url: "",
@@ -213,8 +228,11 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
   };
 
   const handleEdit = (link: any) => {
-    setEditingLink(link);
-    setEditDialogOpen(true);
+    setUiState((prev) => ({
+      ...prev,
+      editingLink: link,
+      editDialogOpen: true,
+    }));
   };
 
   const handleEditSave = (updatedLink: any) => {
@@ -249,16 +267,16 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
   return (
     <div className="space-y-3">
-      {!isAdding && (
+      {!uiState.isAdding && (
         <div className="flex justify-end">
-          <Button2 onClick={() => setIsAdding(true)} variant="blue" className="w-1/3 rounded-md">
+          <Button2 onClick={() => setUiState((prev) => ({ ...prev, isAdding: true }))} variant="blue" className="w-1/3 rounded-md">
             <Plus className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
             <span>Add link</span>
           </Button2>
         </div>
       )}
 
-      {isAdding && (
+      {uiState.isAdding && (
         <div className="border border-border rounded-xl bg-card overflow-hidden animate-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
             <span className="text-xs font-medium text-foreground">New Link</span>
@@ -272,7 +290,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
               <div className="relative shrink-0">
                 <input id="add-icon-upload" type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
                 <label htmlFor="add-icon-upload" className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
-                  {logoPreview ? <img src={logoPreview} alt="Icon" className="h-full w-full object-cover" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
+                  {uiState.logoPreview ? <img src={uiState.logoPreview} alt="Icon" className="h-full w-full object-cover" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
                 </label>
               </div>
 
@@ -283,12 +301,12 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
             <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
               {typeOptions.map((type) => {
                 const Icon = type.icon;
-                const isActive = selectedType === type.id;
+                const isActive = uiState.selectedType === type.id;
 
                 return (
                   <button
                     key={type.id}
-                    onClick={() => setSelectedType(type.id)}
+                    onClick={() => setUiState((prev) => ({ ...prev, selectedType: type.id }))}
                     className={`
                       flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all
                       ${isActive ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}
@@ -301,36 +319,14 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
               })}
             </div>
             {/* Dynamic Content Based on Type */}
-            {selectedType === "url" && <Input value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })} placeholder="https://example.com" className="h-10 text-sm" />}
+            {uiState.selectedType === "url" && <Input value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })} placeholder="https://example.com" className="h-10 text-sm" />}
 
-            {/* {selectedType === "payment" && (
-              <div className="relative">
-                <div className="flex gap-2 filter grayscale opacity-50 pointer-events-none">
-                  <button
-                    onClick={() => handlePaymentSelect("stripe")}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-all ${newLink.paymentProvider === "stripe" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50"}`}
-                  >
-                    Stripe
-                  </button>
-                  <button
-                    onClick={() => handlePaymentSelect("lemonsqueezy")}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-all ${newLink.paymentProvider === "lemonsqueezy" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50"}`}
-                  >
-                    Lemon Squeezy
-                  </button>
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <span className="bg-background/80 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-border shadow-sm">Coming Soon</span>
-                </div>
-              </div>
-            )} */}
-
-            {selectedType === "media" && (
+            {uiState.selectedType === "media" && (
               <div className="relative">
                 <input id="media-upload" type="file" accept="image/*" onChange={handleMediaUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" style={{ pointerEvents: "auto" }} />
                 <label htmlFor="media-upload" className="h-20 rounded-lg border border-dashed border-border bg-muted/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
-                  {mediaPreview ? (
-                    <img src={mediaPreview} alt="Media" className="h-full w-full object-cover" />
+                  {uiState.mediaPreview ? (
+                    <img src={uiState.mediaPreview} alt="Media" className="h-full w-full object-cover" />
                   ) : (
                     <>
                       <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
@@ -343,11 +339,11 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-1">
-              <Button onClick={handleAdd} disabled={isSaving || !newLink.title} size="sm" className="flex-1 h-9 text-sm">
-                {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+              <Button onClick={handleAdd} disabled={uiState.isSaving || !newLink.title} size="sm" className="flex-1 h-9 text-sm">
+                {uiState.isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
                 Add Link
               </Button>
-              <Button onClick={resetForm} variant="ghost" size="sm" className="h-9 text-sm" disabled={isSaving}>
+              <Button onClick={resetForm} variant="ghost" size="sm" className="h-9 text-sm" disabled={uiState.isSaving}>
                 Cancel
               </Button>
             </div>
@@ -361,13 +357,13 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
             <TooltipProvider>
               {/* link preview */}
               {profile.links?.map((link: any) => (
-                <SortableLinkItem key={link.id} link={link} onEdit={handleEdit} onDelete={handleDelete} deletingId={deletingId} />
+                <SortableLinkItem key={link.id} link={link} onEdit={handleEdit} onDelete={handleDelete} deletingId={uiState.deletingId} />
               ))}
             </TooltipProvider>
           </SortableContext>
         </DndContext>
 
-        {(!profile.links || profile.links.length === 0) && !isAdding && (
+        {(!profile.links || profile.links.length === 0) && !uiState.isAdding && (
           <div className="text-center py-6">
             <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted mb-2">
               <Link2Icon className="h-5 w-5 text-muted-foreground" />
@@ -378,7 +374,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
         )}
       </div>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={uiState.deleteDialogOpen} onOpenChange={(open) => setUiState((prev) => ({ ...prev, deleteDialogOpen: open }))}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Discard changes?</AlertDialogTitle>
@@ -395,7 +391,7 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <LinkEditDialog link={editingLink} open={editDialogOpen} onOpenChange={setEditDialogOpen} onSave={handleEditSave} />
+      <LinkEditDialog key={uiState.editingLink?.id || "new"} link={uiState.editingLink} open={uiState.editDialogOpen} onOpenChange={(open) => setUiState((prev) => ({ ...prev, editDialogOpen: open }))} onSave={handleEditSave} />
     </div>
   );
 }

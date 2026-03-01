@@ -20,17 +20,20 @@ function LoginContent() {
   useEffect(() => {
     if (!isPending && session?.user) {
       const handleNavigation = async () => {
+        let onboardingInfo;
         try {
-          const { isOnboarded, username } = await getOnboardingStatus();
-
-          if (!isOnboarded || !username) {
-            router.push("/new");
-          } else {
-            router.push(`/editor/${username}`);
-          }
+          onboardingInfo = await getOnboardingStatus();
         } catch (error) {
           console.error("Auth navigation error:", error);
           router.push("/new"); // Fallback to onboarding
+          return;
+        }
+
+        const { isOnboarded, username } = onboardingInfo;
+        if (!isOnboarded || !username) {
+          router.push("/new");
+        } else {
+          router.push(`/editor/${username}`);
         }
       };
       handleNavigation();

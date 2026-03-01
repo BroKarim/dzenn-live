@@ -33,47 +33,32 @@ interface LinkEditDialogProps {
 }
 
 export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDialogProps) {
-  const [isSaving, setIsSaving] = useState(false);
-  const [selectedType, setSelectedType] = useState<LinkType>("url");
-  const [iconPreview, setIconPreview] = useState<string | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [uiState, setUiState] = useState(() => {
+    let type: LinkType = "url";
+    if (link?.paymentProvider) {
+      type = "payment";
+    } else if (link?.mediaUrl) {
+      type = "media";
+    }
 
-  const [editData, setEditData] = useState({
-    title: "",
-    url: "",
-    description: "",
-    icon: null as string | null,
-    mediaUrl: null as string | null,
-    mediaType: null as "image" | "video" | null,
-    paymentProvider: null as "stripe" | "lemonsqueezy" | null,
-    paymentAccountId: null as string | null,
+    return {
+      isSaving: false,
+      selectedType: type,
+      iconPreview: link?.icon || null,
+      mediaPreview: link?.mediaUrl || null,
+    };
   });
 
-  useEffect(() => {
-    if (link) {
-      setEditData({
-        title: link.title || "",
-        url: link.url || "",
-        description: link.description || "",
-        icon: link.icon,
-        mediaUrl: link.mediaUrl,
-        mediaType: link.mediaType,
-        paymentProvider: link.paymentProvider,
-        paymentAccountId: link.paymentAccountId,
-      });
-      setIconPreview(link.icon);
-      setMediaPreview(link.mediaUrl);
-
-      // Determine type based on existing data
-      if (link.paymentProvider) {
-        setSelectedType("payment");
-      } else if (link.mediaUrl) {
-        setSelectedType("media");
-      } else {
-        setSelectedType("url");
-      }
-    }
-  }, [link]);
+  const [editData, setEditData] = useState({
+    title: link?.title || "",
+    url: link?.url || "",
+    description: link?.description || "",
+    icon: link?.icon || null,
+    mediaUrl: link?.mediaUrl || null,
+    mediaType: link?.mediaType || null,
+    paymentProvider: link?.paymentProvider || null,
+    paymentAccountId: link?.paymentAccountId || null,
+  });
 
   const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     let file = e.target.files?.[0];
@@ -105,9 +90,14 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
       }
 
       // 2. Get Presigned URL
-      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+      const uploadResult = await getUploadUrl(file.name, file.type);
+      const url = uploadResult.url;
+      const publicUrl = uploadResult.publicUrl;
 
-      if (!success || !url) throw new Error(error || "Failed to get upload URL");
+      if (!uploadResult.success || !url) {
+        const fallbackMsg = uploadResult.error || "Failed to get upload URL";
+        throw new Error(fallbackMsg);
+      }
 
       // 3. Upload to S3
       const res = await fetch(url, {
@@ -120,7 +110,7 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
 
       const updatedData = { ...editData, icon: publicUrl! };
       setEditData(updatedData);
-      setIconPreview(publicUrl!);
+      setUiState((prev) => ({ ...prev, iconPreview: publicUrl! }));
 
       if (link) {
         onSave({
@@ -131,7 +121,7 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Error uploading icon");
-      setIconPreview(editData.icon); // Revert preview
+      setUiState((prev) => ({ ...prev, iconPreview: editData.icon })); // Revert preview
     }
   };
 
@@ -163,12 +153,17 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
       }
 
       // 2. Get Presigned URL
-      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+      const mediaUploadRes = await getUploadUrl(file.name, file.type);
+      const mediaUrl = mediaUploadRes.url;
+      const mediaPublicUrl = mediaUploadRes.publicUrl;
 
-      if (!success || !url) throw new Error(error || "Failed to get upload URL");
+      if (!mediaUploadRes.success || !mediaUrl) {
+        const fallbackMsg = mediaUploadRes.error || "Failed to get upload URL";
+        throw new Error(fallbackMsg);
+      }
 
       // 3. Upload to S3
-      const res = await fetch(url, {
+      const res = await fetch(mediaUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
@@ -178,23 +173,23 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
 
       const updatedData = {
         ...editData,
-        mediaUrl: publicUrl!,
+        mediaUrl: mediaPublicUrl!,
         mediaType: "image" as const, // Explicitly cast
       };
       setEditData(updatedData);
-      setMediaPreview(publicUrl!);
+      setUiState((prev) => ({ ...prev, mediaPreview: mediaPublicUrl! }));
 
       if (link) {
         onSave({
           ...link,
-          mediaUrl: publicUrl!,
+          mediaUrl: mediaPublicUrl!,
           mediaType: "image",
         });
       }
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Error uploading media");
-      setMediaPreview(editData.mediaUrl);
+      setUiState((prev) => ({ ...prev, mediaPreview: editData.mediaUrl }));
     }
   };
 
@@ -253,7 +248,7 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
             <div className="relative shrink-0">
               <input id="edit-icon-upload" type="file" accept="image/*" onChange={handleIconUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
               <label htmlFor="edit-icon-upload" className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
-                {iconPreview ? <img src={iconPreview} alt="Icon" className="h-full w-full object-cover" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
+                {uiState.iconPreview ? <img src={uiState.iconPreview} alt="Icon" className="h-full w-full object-cover" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
               </label>
             </div>
 
@@ -269,12 +264,12 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
           <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
             {typeOptions.map((type) => {
               const Icon = type.icon;
-              const isActive = selectedType === type.id;
+              const isActive = uiState.selectedType === type.id;
 
               return (
                 <button
                   key={type.id}
-                  onClick={() => setSelectedType(type.id)}
+                  onClick={() => setUiState((prev) => ({ ...prev, selectedType: type.id }))}
                   className={`
                     flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all
                     ${isActive ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}
@@ -288,31 +283,14 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
           </div>
 
           {/* Dynamic Content */}
-          {selectedType === "url" && <Input value={editData.url} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="https://example.com" className="h-10 text-sm" />}
+          {uiState.selectedType === "url" && <Input value={editData.url} onChange={(e) => setEditData({ ...editData, url: e.target.value })} placeholder="https://example.com" className="h-10 text-sm" />}
 
-          {/* {selectedType === "payment" && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => handlePaymentSelect("stripe")}
-                className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-all ${editData.paymentProvider === "stripe" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50"}`}
-              >
-                Stripe
-              </button>
-              <button
-                onClick={() => handlePaymentSelect("lemonsqueezy")}
-                className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-all ${editData.paymentProvider === "lemonsqueezy" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50"}`}
-              >
-                Lemon Squeezy
-              </button>
-            </div>
-          )} */}
-
-          {selectedType === "media" && (
+          {uiState.selectedType === "media" && (
             <div className="relative">
               <input id="edit-media-upload" type="file" accept="image/*" onChange={handleMediaUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
               <label htmlFor="edit-media-upload" className="h-20 rounded-lg border border-dashed border-border bg-muted/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
-                {mediaPreview ? (
-                  <img src={mediaPreview} alt="Media" className="h-full w-full object-cover" />
+                {uiState.mediaPreview ? (
+                  <img src={uiState.mediaPreview} alt="Media" className="h-full w-full object-cover" />
                 ) : (
                   <>
                     <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
@@ -325,11 +303,11 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
-            <Button onClick={handleSave} disabled={isSaving || !editData.title} size="sm" className="flex-1 h-9 text-sm">
-              {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+            <Button onClick={handleSave} disabled={uiState.isSaving || !editData.title} size="sm" className="flex-1 h-9 text-sm">
+              {uiState.isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
               Save Changes
             </Button>
-            <Button onClick={() => onOpenChange(false)} variant="ghost" size="sm" className="h-9 text-sm" disabled={isSaving}>
+            <Button onClick={() => onOpenChange(false)} variant="ghost" size="sm" className="h-9 text-sm" disabled={uiState.isSaving}>
               Cancel
             </Button>
           </div>

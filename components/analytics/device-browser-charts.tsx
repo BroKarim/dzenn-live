@@ -1,25 +1,10 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { getDeviceIcon } from "./analytics-icons";
 
-const COLORS = [
-  "#3b82f6",
-  "#10b981",
-  "#8b5cf6",
-  "#f59e0b",
-  "#ec4899",
-  "#14b8a6",
-  "#6366f1",
-  "#ef4444",
-];
+const COLORS = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ec4899", "#14b8a6", "#6366f1", "#ef4444"];
 
 interface DataItem {
   name: string;
@@ -32,10 +17,9 @@ interface DeviceBrowserChartsProps {
   browserData?: DataItem[];
 }
 
-export function DeviceBrowserCharts({
-  deviceData = [],
-  browserData = [],
-}: DeviceBrowserChartsProps) {
+const EMPTY_ARRAY: DataItem[] = [];
+
+export function DeviceBrowserCharts({ deviceData = EMPTY_ARRAY, browserData = EMPTY_ARRAY }: DeviceBrowserChartsProps) {
   const totalForShare = (data: DataItem[]) => {
     return data.reduce((sum, item) => sum + item.value, 0) || 1;
   };
@@ -58,23 +42,9 @@ export function DeviceBrowserCharts({
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie
-                  data={deviceData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  fill="#3b82f6"
-                  dataKey="value"
-                >
+                <Pie data={deviceData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} outerRadius={80} fill="#3b82f6" dataKey="value">
                   {deviceData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <RechartsTooltip
@@ -90,10 +60,7 @@ export function DeviceBrowserCharts({
               {deviceData.map((item) => {
                 const DeviceIcon = getDeviceIcon(item.name);
                 return (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between text-sm"
-                  >
+                  <div key={item.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <DeviceIcon className="h-4 w-4" />
                       <span>{item.name}</span>
@@ -115,23 +82,9 @@ export function DeviceBrowserCharts({
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie
-                  data={browserData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  fill="#3b82f6"
-                  dataKey="value"
-                >
+                <Pie data={browserData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} outerRadius={80} fill="#3b82f6" dataKey="value">
                   {browserData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <RechartsTooltip
@@ -148,10 +101,7 @@ export function DeviceBrowserCharts({
                 const total = totalForShare(browserData);
                 const share = getShare(item.value, total);
                 return (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between text-sm"
-                  >
+                  <div key={item.name} className="flex items-center justify-between text-sm">
                     <span>{item.name}</span>
                     <div className="flex items-center gap-4">
                       <span className="text-muted-foreground">{item.value}</span>
@@ -167,4 +117,3 @@ export function DeviceBrowserCharts({
     </div>
   );
 }
-

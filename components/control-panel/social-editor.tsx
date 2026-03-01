@@ -20,37 +20,45 @@ interface SocialMediaEditorProps {
 }
 
 export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState<string>("");
-  const [url, setUrl] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [formState, setFormState] = useState({
+    isOpen: false,
+    editingId: null as string | null,
+    selectedPlatform: "",
+    url: "",
+    searchQuery: "",
+  });
+
   const resetForm = () => {
-    setEditingId(null);
-    setSelectedPlatform("");
-    setUrl("");
-    setSearchQuery("");
-    setIsOpen(false);
+    setFormState({
+      isOpen: false,
+      editingId: null,
+      selectedPlatform: "",
+      url: "",
+      searchQuery: "",
+    });
   };
 
   const handleOpenEdit = (social: any) => {
-    setEditingId(social.id);
-    setSelectedPlatform(social.platform);
-    setUrl(social.url);
-    setIsOpen(true);
+    setFormState({
+      ...formState,
+      editingId: social.id,
+      selectedPlatform: social.platform,
+      url: social.url,
+      isOpen: true,
+    });
   };
 
   const handleSave = () => {
-    if (!selectedPlatform) return;
+    if (!formState.selectedPlatform) return;
 
-    if (editingId) {
-      const updatedSocials = profile.socials.map((s) => (s.id === editingId ? { ...s, platform: selectedPlatform, url } : s));
+    if (formState.editingId) {
+      const updatedSocials = profile.socials.map((s) => (s.id === formState.editingId ? { ...s, platform: formState.selectedPlatform, url: formState.url } : s));
       onUpdate({ ...profile, socials: updatedSocials });
     } else {
       const newSocial = {
         id: `temp-${Date.now()}`,
-        platform: selectedPlatform,
-        url,
+        platform: formState.selectedPlatform,
+        url: formState.url,
         position: profile.socials.length,
       };
       onUpdate({ ...profile, socials: [...profile.socials, newSocial as any] });
@@ -65,15 +73,15 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
     });
   };
 
-  const filteredPlatforms = SOCIAL_PLATFORMS.filter((p) => p.label.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredPlatforms = SOCIAL_PLATFORMS.filter((p) => p.label.toLowerCase().includes(formState.searchQuery.toLowerCase()));
 
   return (
     <div className="space-y-4">
       <Dialog
-        open={isOpen}
+        open={formState.isOpen}
         onOpenChange={(open) => {
           if (!open) resetForm();
-          setIsOpen(open);
+          setFormState((prev) => ({ ...prev, isOpen: open }));
         }}
       >
         <DialogTrigger asChild>
@@ -85,27 +93,27 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
         </DialogTrigger>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Social Link" : "Add Social Link"}</DialogTitle>
+            <DialogTitle>{formState.editingId ? "Edit Social Link" : "Add Social Link"}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
             <div className="space-y-3">
               <Label>Select Platform</Label>
 
-              <Input placeholder="Search platform..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="mb-2" />
+              <Input placeholder="Search platform..." value={formState.searchQuery} onChange={(e) => setFormState((prev) => ({ ...prev, searchQuery: e.target.value }))} className="mb-2" />
 
               <ScrollArea className="h-[240px] rounded-md border p-2">
                 <div className="grid grid-cols-2 gap-2">
                   {filteredPlatforms.length > 0 ? (
                     filteredPlatforms.map((platform) => {
                       const Icon = platform.icon;
-                      const isSelected = selectedPlatform === platform.id;
+                      const isSelected = formState.selectedPlatform === platform.id;
 
                       return (
                         <button
                           key={platform.id}
                           type="button"
-                          onClick={() => setSelectedPlatform(platform.id)}
+                          onClick={() => setFormState((prev) => ({ ...prev, selectedPlatform: platform.id }))}
                           className={`flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all hover:border-primary/50 ${isSelected ? "border-primary bg-primary/10 text-primary" : "border-muted bg-card"}`}
                         >
                           <Icon className={`h-5 w-5 shrink-0 ${isSelected ? "text-primary" : ""}`} />
@@ -122,7 +130,7 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
 
             <div className="space-y-2">
               <Label>URL / Link</Label>
-              <Input placeholder="https://..." value={url} onChange={(e) => setUrl(e.target.value)} />
+              <Input placeholder="https://..." value={formState.url} onChange={(e) => setFormState((prev) => ({ ...prev, url: e.target.value }))} />
             </div>
           </div>
 
@@ -130,8 +138,8 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
             <Button variant="ghost" type="button" onClick={resetForm}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!selectedPlatform}>
-              {editingId ? "Update Link" : "Add to Profile"}
+            <Button onClick={handleSave} disabled={!formState.selectedPlatform}>
+              {formState.editingId ? "Update Link" : "Add to Profile"}
             </Button>
           </DialogFooter>
         </DialogContent>

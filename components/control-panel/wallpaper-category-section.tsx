@@ -36,7 +36,6 @@ export default function WallpaperCategorySection({ category, wallpapers, selecte
               className={`relative h-20 overflow-hidden rounded-lg border-2 transition-[border-color,transform] duration-200 ${
                 isSelected ? "border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background scale-105" : "border-transparent hover:border-primary/50 hover:scale-105"
               }`}
-              style={{ willChange: isSelected ? "auto" : "transform" }}
               title={preset.name}
             >
               {/* Use native img for better performance in grids */}

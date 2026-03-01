@@ -44,10 +44,13 @@ export function ProfileEditor({ profile, onUpdate }: ProfileEditorProps) {
         console.warn("Compression failed, using original file", compError);
       }
 
-      const { success, url, publicUrl, error } = await getUploadUrl(file.name, file.type);
+      const uploadResult = await getUploadUrl(file.name, file.type);
+      const url = uploadResult.url;
+      const publicUrl = uploadResult.publicUrl;
 
-      if (!success || !url) {
-        throw new Error(error || "Failed to get upload URL");
+      if (!uploadResult.success || !url) {
+        const fallbackMsg = uploadResult.error || "Failed to get upload URL";
+        throw new Error(fallbackMsg);
       }
 
       const uploadResponse = await fetch(url, {

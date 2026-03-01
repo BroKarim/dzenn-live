@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence, LazyMotion, domAnimation } from "framer-motion";
 import { ExternalLink, PlayCircle, CreditCard } from "lucide-react";
 import { GlassEffect } from "./control-panel/glass-effect";
 import type { CardTexture } from "@/lib/generated/prisma/client";
@@ -47,7 +47,7 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
   );
 
   const CardBody = (
-    <motion.div
+    <m.div
       initial={{ height: 0, opacity: 0 }}
       animate={{
         height: "auto",
@@ -66,30 +66,30 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
         },
       }}
     >
-      <motion.div initial={{ y: -10 }} animate={{ y: 0 }} exit={{ y: -10 }} transition={{ duration: 0.2, delay: 0.1 }} className="px-6 pb-6">
+      <m.div initial={{ y: -10 }} animate={{ y: 0 }} exit={{ y: -10 }} transition={{ duration: 0.2, delay: 0.1 }} className="px-6 pb-6">
         <div className="flex flex-col gap-4  pt-4">
           {description && (
-            <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-sm text-white/80 leading-relaxed">
+            <m.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-sm text-white/80 leading-relaxed">
               {description}
-            </motion.p>
+            </m.p>
           )}
           {imageUrl && !videoUrl && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="aspect-video w-full overflow-hidden rounded-xl bg-black/20 relative">
+            <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="aspect-video w-full overflow-hidden rounded-xl bg-black/20 relative">
               <Image src={imageUrl} fill className="object-cover" alt={title || ""} />
-            </motion.div>
+            </m.div>
           )}
           {videoUrl && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="aspect-video w-full overflow-hidden rounded-xl bg-black/20 flex items-center justify-center  ">
+            <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="aspect-video w-full overflow-hidden rounded-xl bg-black/20 flex items-center justify-center  ">
               <PlayCircle className="h-10 w-10 text-white/50" />
-            </motion.div>
+            </m.div>
           )}
           {isStripeEnabled && (
-            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }} className="flex items-center gap-3 rounded-xl bg-white/10 p-3">
+            <m.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }} className="flex items-center gap-3 rounded-xl bg-white/10 p-3">
               <CreditCard className="h-5 w-5 text-white" />
               <span className="text-xs font-bold text-white">Support via Stripe</span>
-            </motion.div>
+            </m.div>
           )}
-          <motion.a
+          <m.a
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -99,10 +99,10 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
             onClick={(e) => e.stopPropagation()}
           >
             Visit Link <ExternalLink className="h-3 w-3" />
-          </motion.a>
+          </m.a>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 
   const handleClick = () => {
@@ -121,12 +121,12 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
   };
 
   const Content = (
-    <>
+    <LazyMotion features={domAnimation}>
       <div className="absolute inset-0 opacity-10 rounded-md pointer-events-none" />
       {CardHeader}
       <AnimatePresence>{isExpanded && CardBody}</AnimatePresence>
       <div className="absolute left-0 right-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
-    </>
+    </LazyMotion>
   );
 
   return texture === "glassy" ? <GlassEffect {...WrapperProps}>{Content}</GlassEffect> : <div {...WrapperProps}>{Content}</div>;

@@ -1,9 +1,61 @@
+"use client";
+
 interface PatternRendererProps {
   type: string;
   color: string;
   opacity: number;
   thickness: number;
   scale: number;
+}
+
+interface MaskContentProps {
+  type: string;
+  actualScale: number;
+  holeSize: number;
+}
+
+function MaskContent({ type, actualScale, holeSize }: MaskContentProps) {
+  switch (type) {
+    case "grid":
+      // Melubangi kotak di tengah setiap sel
+      return <rect x={(actualScale - holeSize) / 2} y={(actualScale - holeSize) / 2} width={holeSize} height={holeSize} fill="black" />;
+
+    case "dots":
+      // Melubangi lingkaran di tengah
+      return <circle cx={actualScale / 2} cy={actualScale / 2} r={holeSize / 2} fill="black" />;
+
+    case "stripes":
+      // Melubangi garis vertikal
+      return <rect x={(actualScale - holeSize) / 2} y="0" width={holeSize} height={actualScale} fill="black" />;
+
+    case "waves":
+      // Membuat "bidang" gelombang yang melubangi
+      return (
+        <path
+          d={`
+            M 0 ${actualScale / 2} 
+            Q ${actualScale / 4} ${actualScale / 2 - holeSize / 2}, ${actualScale / 2} ${actualScale / 2} 
+            T ${actualScale} ${actualScale / 2}
+            V ${actualScale} H 0 Z
+          `}
+          fill="black"
+        />
+      );
+
+    case "noise":
+      // Noise pixelated dengan lubang-lubang kecil random
+      const noiseDots = [];
+      const count = 15;
+      for (let i = 0; i < count; i++) {
+        const x = (i * 137.5) % actualScale;
+        const y = (i * 253.1) % actualScale;
+        noiseDots.push(<rect key={i} x={x} y={y} width={holeSize / 4} height={holeSize / 4} fill="black" />);
+      }
+      return <>{noiseDots}</>;
+
+    default:
+      return null;
+  }
 }
 
 export function PatternRenderer({ type, color, opacity, thickness, scale }: PatternRendererProps) {
@@ -42,50 +94,6 @@ export function PatternRenderer({ type, color, opacity, thickness, scale }: Patt
    */
   const patternFillColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacityDecimal})`;
 
-  const renderMaskContent = () => {
-    switch (type) {
-      case "grid":
-        // Melubangi kotak di tengah setiap sel
-        return <rect x={(actualScale - holeSize) / 2} y={(actualScale - holeSize) / 2} width={holeSize} height={holeSize} fill="black" />;
-
-      case "dots":
-        // Melubangi lingkaran di tengah
-        return <circle cx={actualScale / 2} cy={actualScale / 2} r={holeSize / 2} fill="black" />;
-
-      case "stripes":
-        // Melubangi garis vertikal
-        return <rect x={(actualScale - holeSize) / 2} y="0" width={holeSize} height={actualScale} fill="black" />;
-
-      case "waves":
-        // Membuat "bidang" gelombang yang melubangi
-        return (
-          <path
-            d={`
-              M 0 ${actualScale / 2} 
-              Q ${actualScale / 4} ${actualScale / 2 - holeSize / 2}, ${actualScale / 2} ${actualScale / 2} 
-              T ${actualScale} ${actualScale / 2}
-              V ${actualScale} H 0 Z
-            `}
-            fill="black"
-          />
-        );
-
-      case "noise":
-        // Noise pixelated dengan lubang-lubang kecil random
-        const noiseDots = [];
-        const count = 15;
-        for (let i = 0; i < count; i++) {
-          const x = (i * 137.5) % actualScale;
-          const y = (i * 253.1) % actualScale;
-          noiseDots.push(<rect key={i} x={x} y={y} width={holeSize / 4} height={holeSize / 4} fill="black" />);
-        }
-        return noiseDots;
-
-      default:
-        return null;
-    }
-  };
-
   return (
     <svg className="absolute inset-0 h-full w-full pointer-events-none">
       <defs>
@@ -94,7 +102,7 @@ export function PatternRenderer({ type, color, opacity, thickness, scale }: Patt
           <rect width="100%" height="100%" fill="white" />
           {/* Konten pattern sebagai lubang (hitam) */}
           <pattern id={`${patternId}-mask`} x="0" y="0" width={actualScale} height={actualScale} patternUnits="userSpaceOnUse" patternTransform={type === "stripes" ? "rotate(45)" : ""}>
-            {renderMaskContent()}
+            <MaskContent type={type} actualScale={actualScale} holeSize={holeSize} />
           </pattern>
           <rect width="100%" height="100%" fill={`url(#${patternId}-mask)`} />
         </mask>

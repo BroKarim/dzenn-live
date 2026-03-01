@@ -36,61 +36,58 @@ export function SettingsTab({ profile }: SettingsTabProps) {
   const handleSaveSettings = () => {
     startTransition(async () => {
       const toastId = toast.loading("Saving settings...");
+      const hasUsernameChange = username !== profile.username;
+      const hasPublishChange = isPublished !== profile.isPublished;
 
+      const promises = [];
+      if (hasUsernameChange) {
+        promises.push(updateProfileUsername(username));
+      }
+      if (hasPublishChange) {
+        promises.push(togglePublishStatus(isPublished));
+      }
+
+      if (promises.length === 0) {
+        toast.dismiss(toastId);
+        return;
+      }
+
+      let results;
       try {
-        const promises = [];
-        const hasUsernameChange = username !== profile.username;
-        const hasPublishChange = isPublished !== profile.isPublished;
-
-        // Queue updates
-        if (hasUsernameChange) {
-          promises.push(updateProfileUsername(username));
-        }
-
-        if (hasPublishChange) {
-          promises.push(togglePublishStatus(isPublished));
-        }
-
-        if (promises.length === 0) {
-          toast.dismiss(toastId);
-          return;
-        }
-
-        // Execute in parallel
-        const results = await Promise.allSettled(promises);
-
-        // Check results
-        const usernameResult = hasUsernameChange ? (results[0] as PromiseFulfilledResult<any>).value : null;
-        const publishResult = hasPublishChange ? (hasUsernameChange ? (results[1] as PromiseFulfilledResult<any>).value : (results[0] as PromiseFulfilledResult<any>).value) : null;
-
-        let errorMsg = "";
-
-        if (usernameResult && !usernameResult.success) {
-          errorMsg += usernameResult.error + ". ";
-        }
-        if (publishResult && !publishResult.success) {
-          errorMsg += publishResult.error;
-        }
-
-        if (errorMsg) {
-          toast.error(errorMsg, { id: toastId });
-          return;
-        }
-
-        toast.success("Settings saved successfully", { id: toastId });
-
-        // Redirect to new username if changed
-        if (hasUsernameChange) {
-          // Clear localStorage when username changes (new profile context)
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("dzenn-editor-draft");
-          }
-          router.push(`/editor/${username}`);
-        } else {
-          router.refresh();
-        }
+        results = await Promise.allSettled(promises);
       } catch (error) {
         toast.error("Failed to save settings", { id: toastId });
+        return;
+      }
+
+      // Check results outside try block
+      const usernameResult = hasUsernameChange ? (results[0] as PromiseFulfilledResult<any>).value : null;
+      const publishResult = hasPublishChange ? (hasUsernameChange ? (results[1] as PromiseFulfilledResult<any>).value : (results[0] as PromiseFulfilledResult<any>).value) : null;
+
+      let errorMsg = "";
+
+      if (usernameResult && !usernameResult.success) {
+        errorMsg += usernameResult.error + ". ";
+      }
+      if (publishResult && !publishResult.success) {
+        errorMsg += publishResult.error;
+      }
+
+      if (errorMsg) {
+        toast.error(errorMsg, { id: toastId });
+        return;
+      }
+
+      toast.success("Settings saved successfully", { id: toastId });
+
+      // Redirect to new username if changed
+      if (hasUsernameChange) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("dzenn-editor-draft");
+        }
+        router.push(`/editor/${username}`);
+      } else {
+        router.refresh();
       }
     });
   };

@@ -30,12 +30,6 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
     loadWallpapers();
   }, []);
 
-  const [activeTab, setActiveTab] = useState(profile.bgType);
-
-  useEffect(() => {
-    setActiveTab(profile.bgType);
-  }, [profile.bgType]);
-
   const handleBackgroundChange = (updates: Partial<ProfileEditorData>) => {
     onUpdate({ ...profile, ...updates });
   };
@@ -73,7 +67,7 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
   };
 
   return (
-    <Tabs value={activeTab} defaultValue="wallpaper" onValueChange={(v) => setActiveTab(v as any)}>
+    <Tabs value={profile.bgType} defaultValue="wallpaper" onValueChange={(v) => handleBackgroundChange({ bgType: v as any })}>
       <TabsList className="grid w-full grid-cols-4 h-auto bg-transparent  p-1 gap-1">
         <TabsTrigger value="color" className="p-0 h-full w-full">
           <div className="w-full h-full rounded-md border-2 border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 bg-muted/20">

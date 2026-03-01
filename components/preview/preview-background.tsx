@@ -21,9 +21,9 @@ export function PreviewBackground({ profile }: PreviewBackgroundProps) {
   const bgPattern = (profile.bgPattern as any) || { type: "none", color: "#ffffff", opacity: 10, thickness: 1, scale: 20 };
 
   // Memoize expensive computations
-  const backgroundStyle = useMemo(() => getBackgroundStyle(profile), [profile.bgType, profile.bgColor, profile.bgGradientFrom, profile.bgGradientTo, profile.bgWallpaper, profile.bgImage]);
+  const backgroundStyle = useMemo(() => getBackgroundStyle(profile), [profile]);
 
-  const filterStyle = useMemo(() => getFilterStyle(bgEffects), [bgEffects?.blur, bgEffects?.brightness, bgEffects?.saturation, bgEffects?.contrast]);
+  const filterStyle = useMemo(() => getFilterStyle(bgEffects), [bgEffects]);
 
   const shouldScale = useMemo(() => shouldScaleForBlur(bgEffects?.blur), [bgEffects?.blur]);
 
@@ -37,7 +37,6 @@ export function PreviewBackground({ profile }: PreviewBackgroundProps) {
         style={{
           ...backgroundStyle,
           transition: "background-color 0.5s ease, background-image 0.5s ease",
-          willChange: filterStyle !== "none" ? "filter, transform" : "auto",
         }}
       />
 

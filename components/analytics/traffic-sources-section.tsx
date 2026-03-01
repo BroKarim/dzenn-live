@@ -22,9 +22,15 @@ interface TrafficSourcesSectionProps {
   utmCampaigns?: TrafficSource[];
 }
 
-export function TrafficSourcesSection({ referrers = [], utmSources = [], utmMediums = [], utmCampaigns = [] }: TrafficSourcesSectionProps) {
-  const [activeTab, setActiveTab] = useState("referrers");
+const EMPTY_SOURCES: TrafficSource[] = [];
 
+interface TrafficSourceListProps {
+  data: TrafficSource[];
+  getLabel: (item: TrafficSource) => string;
+  getIcon?: (item: TrafficSource) => React.ReactNode;
+}
+
+function TrafficSourceList({ data, getLabel, getIcon }: TrafficSourceListProps) {
   const totalForShare = (data: TrafficSource[]) => {
     return data.reduce((sum, item) => sum + item.clicks, 0) || 1;
   };
@@ -33,44 +39,46 @@ export function TrafficSourcesSection({ referrers = [], utmSources = [], utmMedi
     return total > 0 ? ((clicks / total) * 100).toFixed(2) : "0";
   };
 
-  const renderList = (data: TrafficSource[], getLabel: (item: TrafficSource) => string, getIcon?: (item: TrafficSource) => React.ReactNode) => {
-    if (data.length === 0) {
-      return (
-        <Empty>
-          <EmptyIcon>
-            <Globe />
-          </EmptyIcon>
-          <EmptyTitle>No data available</EmptyTitle>
-        </Empty>
-      );
-    }
-
-    const total = totalForShare(data);
-
+  if (data.length === 0) {
     return (
-      <div className="space-y-1">
-        {data.map((item) => {
-          const share = getShare(item.clicks, total);
-          const label = getLabel(item);
-          const IconComponent = getIcon ? getIcon(item) : null;
-          const ReferrerIcon = item.referrer ? getReferrerIcon(item.referrer) : null;
-
-          return (
-            <div key={label} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                {IconComponent || (ReferrerIcon && <ReferrerIcon className="h-3.5 w-3.5 opacity-70" />)}
-                <span className="text-xs font-medium truncate">{label}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] font-bold text-muted-foreground">{item.clicks}</span>
-                <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-md min-w-[35px] text-center">{share}%</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <Empty>
+        <EmptyIcon>
+          <Globe />
+        </EmptyIcon>
+        <EmptyTitle>No data available</EmptyTitle>
+      </Empty>
     );
-  };
+  }
+
+  const total = totalForShare(data);
+
+  return (
+    <div className="space-y-1">
+      {data.map((item) => {
+        const share = getShare(item.clicks, total);
+        const label = getLabel(item);
+        const IconComponent = getIcon ? getIcon(item) : null;
+        const ReferrerIcon = item.referrer ? getReferrerIcon(item.referrer) : null;
+
+        return (
+          <div key={label} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {IconComponent || (ReferrerIcon && <ReferrerIcon className="h-3.5 w-3.5 opacity-70" />)}
+              <span className="text-xs font-medium truncate">{label}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-bold text-muted-foreground">{item.clicks}</span>
+              <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-md min-w-[35px] text-center">{share}%</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function TrafficSourcesSection({ referrers = EMPTY_SOURCES, utmSources = EMPTY_SOURCES, utmMediums = EMPTY_SOURCES, utmCampaigns = EMPTY_SOURCES }: TrafficSourcesSectionProps) {
+  const [activeTab, setActiveTab] = useState("referrers");
 
   return (
     <Card className="rounded-xl border-white/5 bg-white/5 shadow-none">
@@ -96,19 +104,19 @@ export function TrafficSourcesSection({ referrers = [], utmSources = [], utmMedi
 
           <div className="mt-4">
             <TabsContent value="referrers" className="m-0">
-              {renderList(referrers, (item) => item.referrer || "Unknown")}
+              <TrafficSourceList data={referrers} getLabel={(item) => item.referrer || "Unknown"} />
             </TabsContent>
 
             <TabsContent value="utm-sources" className="m-0">
-              {renderList(utmSources, (item) => item.source || "Unknown")}
+              <TrafficSourceList data={utmSources} getLabel={(item) => item.source || "Unknown"} />
             </TabsContent>
 
             <TabsContent value="utm-mediums" className="m-0">
-              {renderList(utmMediums, (item) => item.medium || "Unknown")}
+              <TrafficSourceList data={utmMediums} getLabel={(item) => item.medium || "Unknown"} />
             </TabsContent>
 
             <TabsContent value="utm-campaigns" className="m-0">
-              {renderList(utmCampaigns, (item) => item.campaign || "Unknown")}
+              <TrafficSourceList data={utmCampaigns} getLabel={(item) => item.campaign || "Unknown"} />
             </TabsContent>
           </div>
         </Tabs>

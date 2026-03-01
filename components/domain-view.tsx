@@ -18,17 +18,11 @@ type DomainViewProps = {
 export function DomainView({ value, placeholder, buttonCopy, className }: DomainViewProps) {
   const [isCopied, setIsCopied] = useState(false);
 
-  useEffect(() => {
-    if (isCopied) {
-      const timeout = setTimeout(() => setIsCopied(false), 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [isCopied]);
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
       setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy text: ", err);
     }

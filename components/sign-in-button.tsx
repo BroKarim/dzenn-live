@@ -13,22 +13,16 @@ interface SignInButtonProps {
   callbackURL?: string;
 }
 
-export function SignInButton({
-  provider = "google",
-  children,
-  className,
-  size,
-  variant,
-  callbackURL,
-}: SignInButtonProps) {
+export function SignInButton({ provider = "google", children, className, size, variant, callbackURL }: SignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
     setIsLoading(true);
+    const resolvedCallbackURL = callbackURL || "/";
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: callbackURL || "/",
+        callbackURL: resolvedCallbackURL,
       });
     } catch (error) {
       console.error("Sign in error:", error);
@@ -37,15 +31,8 @@ export function SignInButton({
   };
 
   return (
-    <Button
-      onClick={handleSignIn}
-      disabled={isLoading}
-      className={className}
-      size={size}
-      variant={variant}
-    >
+    <Button onClick={handleSignIn} disabled={isLoading} className={className} size={size} variant={variant}>
       {children}
     </Button>
   );
 }
-

@@ -34,7 +34,6 @@ export const scaleValue = function (value: number, from: ScaleValueParams, to: S
 };
 
 export function DockIcon({ className, src, href, label, handleIconHover, children, iconSize, texture }: DockIconProps) {
-  const ref = useRef<HTMLLIElement | null>(null);
   const isGlassy = texture === "glassy";
 
   return (
@@ -62,7 +61,6 @@ export function DockIcon({ className, src, href, label, handleIconHover, childre
         }
       `}</style>
       <li
-        ref={ref}
         style={
           {
             transition: "all cubic-bezier(0.25, 1, 0.5, 1) 150ms",
@@ -108,19 +106,22 @@ export function DockIcon({ className, src, href, label, handleIconHover, childre
 export function Dock({ className, children, maxAdditionalSize = 5, iconSize = 40, texture }: DockProps & { texture?: CardTexture }) {
   const dockRef = useRef<HTMLDivElement | null>(null);
 
-  const handleIconHover = (e: React.MouseEvent<HTMLLIElement>) => {
-    if (!dockRef.current) return;
-    const mousePos = e.clientX;
-    const iconPosLeft = e.currentTarget.getBoundingClientRect().left;
-    const iconWidth = e.currentTarget.getBoundingClientRect().width;
+  const handleIconHover = React.useCallback(
+    (e: React.MouseEvent<HTMLLIElement>) => {
+      if (!dockRef.current) return;
+      const mousePos = e.clientX;
+      const iconPosLeft = e.currentTarget.getBoundingClientRect().left;
+      const iconWidth = e.currentTarget.getBoundingClientRect().width;
 
-    const cursorDistance = (mousePos - iconPosLeft) / iconWidth;
-    const offsetPixels = scaleValue(cursorDistance, [0, 1], [maxAdditionalSize * -1, maxAdditionalSize]);
+      const cursorDistance = (mousePos - iconPosLeft) / iconWidth;
+      const offsetPixels = scaleValue(cursorDistance, [0, 1], [maxAdditionalSize * -1, maxAdditionalSize]);
 
-    dockRef.current.style.setProperty("--dock-offset-left", `${offsetPixels * -1}px`);
+      dockRef.current.style.setProperty("--dock-offset-left", `${offsetPixels * -1}px`);
 
-    dockRef.current.style.setProperty("--dock-offset-right", `${offsetPixels}px`);
-  };
+      dockRef.current.style.setProperty("--dock-offset-right", `${offsetPixels}px`);
+    },
+    [maxAdditionalSize],
+  );
 
   return (
     <div className="flex justify-center w-full">
@@ -140,7 +141,7 @@ export function Dock({ className, children, maxAdditionalSize = 5, iconSize = 40
               : {}
           }
         >
-          {React.Children.map(children, (child) => (React.isValidElement<DockIconProps>(child) ? React.cloneElement(child as React.ReactElement<DockIconProps>, { handleIconHover, iconSize, texture }) : child))}
+          {React.Children.map(children, (child) => (React.isValidElement<DockIconProps>(child) ? React.cloneElement(child, { handleIconHover, iconSize, texture }) : child))}
         </ul>
       </nav>
     </div>
