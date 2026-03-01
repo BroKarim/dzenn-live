@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
@@ -82,8 +83,8 @@ export function ProfileEditor({ profile, onUpdate }: ProfileEditorProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="relative group cursor-pointer shrink-0">
-          <div className="h-14 w-14 rounded-xl overflow-hidden shadow-dzenn border-none flex items-center justify-center transition-all group-hover:border-primary/50">
-            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" /> : <Camera className="h-5 w-5 text-muted-foreground" />}
+          <div className="h-14 w-14 rounded-xl overflow-hidden shadow-dzenn border-none flex items-center justify-center transition-all group-hover:border-primary/50 relative">
+            {profile.avatarUrl ? <Image src={profile.avatarUrl} alt="Avatar" fill className="object-cover" unoptimized /> : <Camera className="h-5 w-5 text-muted-foreground" />}
           </div>
           <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleImageUpload} disabled={isUploading} />
           <div className="absolute inset-0 flex items-center justify-center rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-black/40">

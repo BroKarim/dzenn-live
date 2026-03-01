@@ -64,6 +64,6 @@ export const publicProfilePayload = {
   },
 } satisfies Prisma.ProfileSelect;
 
-export type PublicProfileData = Prisma.ProfileGetPayload<{
+type PublicProfileData = Prisma.ProfileGetPayload<{
   select: typeof publicProfilePayload;
 }>;

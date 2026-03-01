@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRef } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface DockProps {
@@ -96,7 +97,7 @@ export function DockIcon({ className, src, href, label, handleIconHover, childre
           <span className="absolute top-[-40px] left-1/2 -translate-x-1/2 rounded-md border border-gray-100 bg-linear-to-t from-neutral-100 to-white p-1 px-2 text-[10px] font-medium whitespace-nowrap text-black opacity-0 transition-opacity duration-200 group-hover/li:opacity-100 dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-800 dark:text-white pointer-events-none">
             {label}
           </span>
-          {src ? <img src={src} alt={label} className="h-full w-full rounded-[inherit]" /> : children}
+          {src ? <Image src={src} alt={label} fill className="rounded-[inherit] object-contain" /> : children}
         </a>
       </li>
     </>

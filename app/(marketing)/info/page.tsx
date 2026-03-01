@@ -1,4 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Info · The Dzenn Philosophy",
+  description: "Learn about the mindset behind Dzenn—why digital identity became stale and how we're redefining the 'link-in-bio' for modern creators.",
+};
 
 export default function InfoPage() {
   return (

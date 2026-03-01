@@ -1,6 +1,6 @@
 import { facebook, tiktok, twitch } from "better-auth";
 
-export type IconProps = React.HTMLAttributes<SVGElement>;
+type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
   chevronRight: (props: IconProps) => (

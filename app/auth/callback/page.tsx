@@ -2,7 +2,12 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { ensureUserHasProfile } from "@/server/user/settings/actions";
-import { CallbackClient } from "./callback-client";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Authenticating · Dzenn",
+  description: "Securely logging you in and preparing your space.",
+};
 
 export default async function AuthCallbackPage() {
   const session = await auth.api.getSession({
@@ -14,7 +19,7 @@ export default async function AuthCallbackPage() {
   }
 
   const { username } = await ensureUserHasProfile();
-  const redirectTo = `/editor/${username}`;
 
-  return <CallbackClient redirectTo={redirectTo} />;
+  // Directly redirect on server for better performance and to satisfy react-doctor rules
+  redirect(`/editor/${username}`);
 }

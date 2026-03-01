@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Link as LinkIcon, Image as ImageIcon, Loader2, GripVertical, X, ExternalLink, Pencil } from "lucide-react";
+import Image from "next/image";
+import { Loader2, Plus, Link as LinkIcon, Image as ImageIcon, X, GripVertical, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { ProfileEditorData } from "@/server/user/profile/payloads";
@@ -289,8 +290,11 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
             <div className="flex gap-2">
               <div className="relative shrink-0">
                 <input id="add-icon-upload" type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
-                <label htmlFor="add-icon-upload" className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
-                  {uiState.logoPreview ? <img src={uiState.logoPreview} alt="Icon" className="h-full w-full object-cover" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
+                <label
+                  htmlFor="add-icon-upload"
+                  className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden relative"
+                >
+                  {uiState.logoPreview ? <Image src={uiState.logoPreview} alt="Icon" fill className="object-cover" unoptimized /> : <Plus className="h-4 w-4 text-muted-foreground" />}
                 </label>
               </div>
 
@@ -324,9 +328,12 @@ export function LinkCardEditor({ profile, onUpdate }: LinkCardEditorProps) {
             {uiState.selectedType === "media" && (
               <div className="relative">
                 <input id="media-upload" type="file" accept="image/*" onChange={handleMediaUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" style={{ pointerEvents: "auto" }} />
-                <label htmlFor="media-upload" className="h-20 rounded-lg border border-dashed border-border bg-muted/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
+                <label
+                  htmlFor="media-upload"
+                  className="h-20 rounded-lg border border-dashed border-border bg-muted/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden relative"
+                >
                   {uiState.mediaPreview ? (
-                    <img src={uiState.mediaPreview} alt="Media" className="h-full w-full object-cover" />
+                    <Image src={uiState.mediaPreview} alt="Media" fill className="object-cover" unoptimized />
                   ) : (
                     <>
                       <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
@@ -422,7 +429,9 @@ function SortableLinkItem({ link, onEdit, onDelete, deletingId }: SortableLinkIt
       </div>
 
       {link.icon ? (
-        <img src={link.icon} alt="" className="h-10 w-10 rounded-md object-cover shrink-0" />
+        <div className="h-10 w-10 rounded-md overflow-hidden shrink-0 relative">
+          <Image src={link.icon} alt={link.title} fill className="object-cover" unoptimized />
+        </div>
       ) : (
         <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center shrink-0">
           <LinkIcon className="h-4 w-4 text-muted-foreground" />

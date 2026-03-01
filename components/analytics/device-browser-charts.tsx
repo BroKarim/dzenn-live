@@ -43,8 +43,8 @@ export function DeviceBrowserCharts({ deviceData = EMPTY_ARRAY, browserData = EM
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={deviceData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} outerRadius={80} fill="#3b82f6" dataKey="value">
-                  {deviceData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {deviceData.map((item) => (
+                    <Cell key={item.name} fill={COLORS[deviceData.indexOf(item) % COLORS.length]} />
                   ))}
                 </Pie>
                 <RechartsTooltip
@@ -83,8 +83,8 @@ export function DeviceBrowserCharts({ deviceData = EMPTY_ARRAY, browserData = EM
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={browserData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} outerRadius={80} fill="#3b82f6" dataKey="value">
-                  {browserData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {browserData.map((item) => (
+                    <Cell key={item.name} fill={COLORS[browserData.indexOf(item) % COLORS.length]} />
                   ))}
                 </Pie>
                 <RechartsTooltip

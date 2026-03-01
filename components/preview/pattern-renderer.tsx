@@ -17,19 +17,15 @@ interface MaskContentProps {
 function MaskContent({ type, actualScale, holeSize }: MaskContentProps) {
   switch (type) {
     case "grid":
-      // Melubangi kotak di tengah setiap sel
       return <rect x={(actualScale - holeSize) / 2} y={(actualScale - holeSize) / 2} width={holeSize} height={holeSize} fill="black" />;
 
     case "dots":
-      // Melubangi lingkaran di tengah
       return <circle cx={actualScale / 2} cy={actualScale / 2} r={holeSize / 2} fill="black" />;
 
     case "stripes":
-      // Melubangi garis vertikal
       return <rect x={(actualScale - holeSize) / 2} y="0" width={holeSize} height={actualScale} fill="black" />;
 
     case "waves":
-      // Membuat "bidang" gelombang yang melubangi
       return (
         <path
           d={`
@@ -43,13 +39,12 @@ function MaskContent({ type, actualScale, holeSize }: MaskContentProps) {
       );
 
     case "noise":
-      // Noise pixelated dengan lubang-lubang kecil random
       const noiseDots = [];
       const count = 15;
       for (let i = 0; i < count; i++) {
         const x = (i * 137.5) % actualScale;
         const y = (i * 253.1) % actualScale;
-        noiseDots.push(<rect key={i} x={x} y={y} width={holeSize / 4} height={holeSize / 4} fill="black" />);
+        noiseDots.push(<rect key={`noise-${i}`} x={x} y={y} width={holeSize / 4} height={holeSize / 4} fill="black" />);
       }
       return <>{noiseDots}</>;
 
@@ -65,13 +60,8 @@ export function PatternRenderer({ type, color, opacity, thickness, scale }: Patt
   const maskId = `mask-${type}`;
   const opacityDecimal = opacity / 100;
 
-  // Base scale (ukuran satu ubin pattern)
-  // 100% scale kita set ke 40px agar lebih leluasa
   const actualScale = (scale / 100) * 40;
 
-  // Hole Size (ukuran lubang)
-  // Semakin kecil thickness slider (13%), semakin kecil lubangnya (bentuk makin tebal)
-  // Semakin besar thickness slider (200%), semakin besar lubangnya (bentuk makin tipis)
   const holeSize = (thickness / 200) * actualScale;
 
   // Convert hex color to RGB
@@ -87,20 +77,14 @@ export function PatternRenderer({ type, color, opacity, thickness, scale }: Patt
   };
 
   const rgb = hexToRgb(color);
-  /**
-   * Kita gunakan fill solid tapi dengan mask.
-   * Mask Putih = Terlihat (Solid Color)
-   * Mask Hitam = Berlubang (Transparan, memperlihatkan background)
-   */
+
   const patternFillColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacityDecimal})`;
 
   return (
     <svg className="absolute inset-0 h-full w-full pointer-events-none">
       <defs>
         <mask id={maskId}>
-          {/* Base mask putih (artinya seluruh area terisi warna) */}
           <rect width="100%" height="100%" fill="white" />
-          {/* Konten pattern sebagai lubang (hitam) */}
           <pattern id={`${patternId}-mask`} x="0" y="0" width={actualScale} height={actualScale} patternUnits="userSpaceOnUse" patternTransform={type === "stripes" ? "rotate(45)" : ""}>
             <MaskContent type={type} actualScale={actualScale} holeSize={holeSize} />
           </pattern>
@@ -108,7 +92,6 @@ export function PatternRenderer({ type, color, opacity, thickness, scale }: Patt
         </mask>
       </defs>
 
-      {/* Bidang solid yang dikenakan mask untuk membuat lubang pattern */}
       <rect width="100%" height="100%" fill={patternFillColor} mask={`url(#${maskId})`} />
     </svg>
   );

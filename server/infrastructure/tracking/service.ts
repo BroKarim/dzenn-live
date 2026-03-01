@@ -162,7 +162,7 @@ function extractReferrerDomain(referrer: string | null): string | null {
   }
 }
 
-export interface TrackingData {
+interface TrackingData {
   linkId: string;
   ipAddress: string | null;
   userAgent: string | null;
@@ -173,7 +173,7 @@ export interface TrackingData {
   url?: string | null;
 }
 
-export interface TrackingResult {
+interface TrackingResult {
   success: boolean;
   tracked: boolean;
   reason?: string;

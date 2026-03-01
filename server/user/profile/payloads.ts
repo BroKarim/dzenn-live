@@ -89,6 +89,6 @@ export type ProfileEditorData = Prisma.ProfileGetPayload<{
   select: typeof profileEditorPayload;
 }>;
 
-export type ProfilePublicData = Prisma.ProfileGetPayload<{
+type ProfilePublicData = Prisma.ProfileGetPayload<{
   select: typeof profilePublicPayload;
 }>;

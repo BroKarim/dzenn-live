@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-export interface BackgroundStyleConfig {
+interface BackgroundStyleConfig {
   bgType: string;
   bgColor: string;
   bgGradientFrom: string | null;

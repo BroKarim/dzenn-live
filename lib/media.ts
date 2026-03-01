@@ -1,6 +1,6 @@
 import imageCompression from "browser-image-compression";
 
-export interface CompressionOptions {
+interface CompressionOptions {
   maxSizeMB?: number;
   maxWidthOrHeight?: number;
   useWebWorker?: boolean;

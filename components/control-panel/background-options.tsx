@@ -121,9 +121,9 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
 
       <TabsContent value="gradient" className="space-y-4 pt-4">
         <div className="flex flex-wrap gap-1 justify-between">
-          {BACKGROUND_GRADIENTS.map((gradient, i) => (
+          {BACKGROUND_GRADIENTS.map((gradient) => (
             <button
-              key={i}
+              key={`${gradient.from}-${gradient.to}`}
               onClick={() => handleBackgroundChange({ bgType: "gradient", bgGradientFrom: gradient.from, bgGradientTo: gradient.to })}
               className={`relative aspect-square h-10 w-10 rounded-md transition-all duration-200 ${
                 profile.bgGradientFrom === gradient.from && profile.bgGradientTo === gradient.to ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110 z-10" : "hover:scale-110 active:scale-95 border border-black/5"
@@ -141,7 +141,7 @@ export default function BackgroundOptions({ profile, onUpdate }: BackgroundOptio
         {isLoadingWallpapers ? (
           <div className="grid grid-cols-3 gap-2">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-20 w-full animate-pulse rounded-lg bg-muted/50" />
+              <div key={`skeleton-${i}`} className="h-20 w-full animate-pulse rounded-lg bg-muted/50" />
             ))}
           </div>
         ) : wallpaperPresets.length === 0 ? (

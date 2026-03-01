@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export function Hero() {
   const [username, setUsername] = useState("");
@@ -27,17 +28,19 @@ export function Hero() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-zinc-950">
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
           src="https://res.cloudinary.com/dctl5pihh/image/upload/f_auto,q_auto,w_1920/background_valoru.jpg"
           alt="Hero background"
-          loading="eager"
-          fetchPriority="high"
-          className={`w-full h-full object-cover transition-[transform,opacity] duration-700 ${isHovered ? "scale-105" : "scale-100"} ${imageLoaded ? "opacity-100" : "opacity-90 scale-110"}`}
+          fill
+          priority
+          quality={90}
+          className={`object-cover transition-[transform,opacity] duration-700 ${isHovered ? "scale-105" : "scale-100"} ${imageLoaded ? "opacity-100" : "opacity-90 scale-110"}`}
           onLoad={() => setImageLoaded(true)}
           onError={(e) => {
             console.error("Image failed to load:", e);
             // Fallback to original URL if transformation fails
-            (e.target as HTMLImageElement).src = "https://res.cloudinary.com/dctl5pihh/image/upload/v1768287477/background_valoru.jpg";
+            const target = e.target as HTMLImageElement;
+            target.src = "https://res.cloudinary.com/dctl5pihh/image/upload/v1768287477/background_valoru.jpg";
           }}
         />
       </div>

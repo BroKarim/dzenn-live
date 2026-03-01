@@ -63,8 +63,8 @@ export function PagesSection({ link, timeAnalysis = EMPTY_TIME_ANALYSIS }: Pages
           <TabsContent value="time-analysis" className="mt-4 m-0">
             {timeAnalysis.length > 0 ? (
               <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                {timeAnalysis.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors border-b border-white/5 last:border-0">
+                {timeAnalysis.map((item) => (
+                  <div key={item.date} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors border-b border-white/5 last:border-0">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium">{item.date}</p>
                     </div>

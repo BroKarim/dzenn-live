@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import Image from "next/image";
 import type { BackgroundPreset } from "@/server/website/background-presets/schema";
 
 interface WallpaperCategorySectionProps {
@@ -38,8 +39,8 @@ export default function WallpaperCategorySection({ category, wallpapers, selecte
               }`}
               title={preset.name}
             >
-              {/* Use native img for better performance in grids */}
-              <img src={preset.url} className="absolute inset-0 w-full h-full object-cover" alt={preset.name} loading="lazy" />
+              {/* Use Next.js Image for better performance in grids */}
+              <Image src={preset.url} fill className="object-cover" alt={preset.name} sizes="(max-width: 768px) 33vw, 150px" />
               {isSelected && <div className="absolute inset-0 bg-primary/10 border-2 border-primary/30" />}
             </button>
           );

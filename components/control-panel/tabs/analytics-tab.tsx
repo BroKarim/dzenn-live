@@ -120,10 +120,12 @@ export function AnalyticsTab({ profileId, links }: AnalyticsTabProps) {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await queryClient.invalidateQueries({ queryKey: ["analytics", selectedLinkId] });
-      await queryClient.invalidateQueries({ queryKey: ["link-click-counts"] });
-      await queryClient.refetchQueries({ queryKey: ["analytics", selectedLinkId] });
-      await queryClient.refetchQueries({ queryKey: ["link-click-counts"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["analytics", selectedLinkId] }),
+        queryClient.invalidateQueries({ queryKey: ["link-click-counts"] }),
+        queryClient.refetchQueries({ queryKey: ["analytics", selectedLinkId] }),
+        queryClient.refetchQueries({ queryKey: ["link-click-counts"] }),
+      ]);
     } catch (error) {
       console.error("Failed to refresh analytics:", error);
     } finally {

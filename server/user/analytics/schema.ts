@@ -37,7 +37,7 @@ export const linksClickCountsQuerySchema = z.object({
   includeBots: z.boolean().optional().default(false),
 });
 
-export type LinkStatsQuery = z.infer<typeof linkStatsQuerySchema>;
-export type ProfileStatsQuery = z.infer<typeof profileStatsQuerySchema>;
-export type LinkClickCountQuery = z.infer<typeof linkClickCountQuerySchema>;
-export type LinksClickCountsQuery = z.infer<typeof linksClickCountsQuerySchema>;
+type LinkStatsQuery = z.infer<typeof linkStatsQuerySchema>;
+type ProfileStatsQuery = z.infer<typeof profileStatsQuerySchema>;
+type LinkClickCountQuery = z.infer<typeof linkClickCountQuerySchema>;
+type LinksClickCountsQuery = z.infer<typeof linksClickCountsQuerySchema>;

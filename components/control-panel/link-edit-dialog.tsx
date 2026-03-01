@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Plus, Link as LinkIcon, Image as ImageIcon, X } from "lucide-react";
+import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getUploadUrl } from "@/server/upload/actions";
 import { compressImage } from "@/lib/media";
@@ -247,8 +248,11 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
           <div className="flex gap-3">
             <div className="relative shrink-0">
               <input id="edit-icon-upload" type="file" accept="image/*" onChange={handleIconUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
-              <label htmlFor="edit-icon-upload" className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
-                {uiState.iconPreview ? <img src={uiState.iconPreview} alt="Icon" className="h-full w-full object-cover" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
+              <label
+                htmlFor="edit-icon-upload"
+                className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden relative"
+              >
+                {uiState.iconPreview ? <Image src={uiState.iconPreview} alt="Icon" fill className="object-cover" unoptimized /> : <Plus className="h-4 w-4 text-muted-foreground" />}
               </label>
             </div>
 
@@ -288,9 +292,12 @@ export function LinkEditDialog({ link, open, onOpenChange, onSave }: LinkEditDia
           {uiState.selectedType === "media" && (
             <div className="relative">
               <input id="edit-media-upload" type="file" accept="image/*" onChange={handleMediaUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
-              <label htmlFor="edit-media-upload" className="h-20 rounded-lg border border-dashed border-border bg-muted/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
+              <label
+                htmlFor="edit-media-upload"
+                className="h-20 rounded-lg border border-dashed border-border bg-muted/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden relative"
+              >
                 {uiState.mediaPreview ? (
-                  <img src={uiState.mediaPreview} alt="Media" className="h-full w-full object-cover" />
+                  <Image src={uiState.mediaPreview} alt="Media" fill className="object-cover" unoptimized />
                 ) : (
                   <>
                     <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
