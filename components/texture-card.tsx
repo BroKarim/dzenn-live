@@ -29,18 +29,35 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
   const hasExtraContent = !!(description || imageUrl || videoUrl || isStripeEnabled);
 
   const CardHeader = (
-    <div className="relative flex h-16 w-full items-center justify-center px-6">
-      <div className="flex items-center gap-3 z-10">
-        {icon && (
-          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-white/10">
-            <Image src={icon} fill className="object-cover" alt="" sizes="32px" />
+    <div className="relative flex w-full min-h-16">
+      {imageUrl ? (
+        // Layout 2 kolom saat ada image
+        <>
+          <div className="flex flex-1 items-center justify-end px-6 py-4 z-10">
+            <div className="flex items-center gap-3">
+              {icon && (
+                <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-white/10">
+                  <Image src={icon} fill className="object-cover" alt="" sizes="32px" />
+                </div>
+              )}
+              <h2 className={`${texture === "glassy" ? "text-white" : titleColor} text-lg font-semibold tracking-tighter line-clamp-2 text-right leading-snug`}>{title}</h2>
+            </div>
           </div>
-        )}
-        <h2 className={`${texture === "glassy" ? "text-white" : titleColor} text-lg font-semibold tracking-tighter max-w-[200px] truncate`}>{title}</h2>
-      </div>
-      {imageUrl && (
-        <div className={`absolute right-0 top-0 h-full w-20 overflow-hidden rounded-r-md transition-opacity duration-300 ${isExpanded ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-          <Image src={imageUrl} fill className="object-cover shadow-sm" alt={title || ""} sizes="80px" />
+          <div className={`relative w-20 shrink-0 overflow-hidden rounded-r-md transition-opacity duration-300 ${isExpanded ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+            <Image src={imageUrl} fill className="object-cover shadow-sm" alt={title || ""} sizes="80px" />
+          </div>
+        </>
+      ) : (
+        // Layout normal tanpa image
+        <div className="flex w-full items-center justify-center px-6 py-4 z-10">
+          <div className="flex items-center gap-3">
+            {icon && (
+              <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-white/10">
+                <Image src={icon} fill className="object-cover" alt="" sizes="32px" />
+              </div>
+            )}
+            <h2 className={`${texture === "glassy" ? "text-white" : titleColor} text-lg font-semibold tracking-tighter line-clamp-2 text-center leading-snug max-w-[200px]`}>{title}</h2>
+          </div>
         </div>
       )}
     </div>
