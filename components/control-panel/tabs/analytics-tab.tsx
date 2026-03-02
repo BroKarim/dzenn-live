@@ -316,7 +316,12 @@ export function AnalyticsTab({ profileId, links }: AnalyticsTabProps) {
                       const total = totalForShare(topLinksWithDetails);
                       const share = getShare(item.clicks, total);
                       return (
-                        <div key={item.link_id} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors" onClick={() => setSelectedLinkId(item.link_id)}>
+                        <button
+                          key={item.link_id}
+                          type="button"
+                          className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors outline-none focus-visible:bg-white/10 text-left"
+                          onClick={() => setSelectedLinkId(item.link_id)}
+                        >
                           <div className="flex-1 min-w-0 mr-4">
                             <p className="text-sm font-medium truncate">{item.title}</p>
                             <p className="text-[10px] text-muted-foreground truncate opacity-70">{item.url}</p>
@@ -325,7 +330,7 @@ export function AnalyticsTab({ profileId, links }: AnalyticsTabProps) {
                             <span className="text-[11px] font-bold">{item.clicks}</span>
                             <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-md min-w-[35px] text-center">{share}%</span>
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>

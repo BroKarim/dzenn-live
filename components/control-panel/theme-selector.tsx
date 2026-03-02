@@ -33,7 +33,12 @@ function ThemeIcon({ theme, className }: ThemeIconProps) {
 // Extract theme item to separate component for better performance
 function ThemeItem({ theme, isActive, onSelect }: { theme: ProfileTheme & { fontName: string }; isActive: boolean; onSelect: () => void }) {
   return (
-    <button onClick={onSelect} className={cn("w-full flex items-center justify-between gap-3 p-2.5 rounded-lg transition-all text-left", "hover:bg-zinc-100 dark:hover:bg-zinc-800/80", isActive && "bg-zinc-100/80 dark:bg-zinc-800/50")}>
+    <button
+      onClick={onSelect}
+      role="option"
+      aria-selected={isActive}
+      className={cn("w-full flex items-center justify-between gap-3 p-2.5 rounded-lg transition-all text-left", "hover:bg-zinc-100 dark:hover:bg-zinc-800/80", isActive && "bg-zinc-100/80 dark:bg-zinc-800/50")}
+    >
       <div className="flex items-center gap-3">
         <div className={cn("p-2 rounded-lg transition-colors", isActive ? "bg-white dark:bg-zinc-950 shadow-sm border border-zinc-200 dark:border-zinc-700" : "bg-zinc-100 dark:bg-zinc-900")}>
           <ThemeIcon theme={theme} className="h-4 w-4" />
@@ -97,6 +102,7 @@ export function ThemeSelector({ profile, onUpdate }: ThemeSelectorProps) {
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            aria-controls="theme-listbox"
             className="w-full h-12 justify-between bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-[0.98]"
           >
             <div className="flex items-center gap-3">
@@ -118,7 +124,7 @@ export function ThemeSelector({ profile, onUpdate }: ThemeSelectorProps) {
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Select Typography</span>
           </div>
-          <div className="max-h-[350px] overflow-y-auto p-1 custom-scrollbar">
+          <div id="theme-listbox" role="listbox" className="max-h-[350px] overflow-y-auto p-1 custom-scrollbar">
             {themesWithFontNames.map((theme) => (
               <ThemeItem key={theme.id} theme={theme} isActive={profile.theme === theme.id} onSelect={() => handleThemeSelect(theme.id)} />
             ))}

@@ -84,13 +84,13 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
           setFormState((prev) => ({ ...prev, isOpen: open }));
         }}
       >
-        <DialogTrigger asChild>
-          <div className="flex justify-end">
-            <Button2 variant="blue" className="w-1/3 border-dashed rounded-md border">
+        <div className="flex justify-end">
+          <DialogTrigger asChild>
+            <Button2 variant="blue" className="w-1/3 border-dashed rounded-md border text-xs">
               <Plus className="h-4 w-4" /> Add Social Media
             </Button2>
-          </div>
-        </DialogTrigger>
+          </DialogTrigger>
+        </div>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{formState.editingId ? "Edit Social Link" : "Add Social Link"}</DialogTitle>
@@ -151,7 +151,7 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
           const Icon = platform?.icon || Globe;
           return (
             <div key={social.id} className="flex items-center justify-between group rounded-xl border bg-card p-3 transition-all hover:border-primary/50">
-              <div className="flex flex-1 items-center gap-3 cursor-pointer" onClick={() => handleOpenEdit(social)}>
+              <button type="button" className="flex flex-1 items-center gap-3 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary rounded-lg text-left" onClick={() => handleOpenEdit(social)}>
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
                   <Icon className="h-5 w-5" />
                 </div>
@@ -159,7 +159,7 @@ export function SocialMediaEditor({ profile, onUpdate }: SocialMediaEditorProps)
                   <p className="text-sm font-semibold capitalize">{platform?.label || social.platform}</p>
                   <p className="text-xs text-muted-foreground truncate max-w-[200px]">{social.url || "No link added"}</p>
                 </div>
-              </div>
+              </button>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="icon" variant="ghost" onClick={() => handleOpenEdit(social)}>
                   <Edit2 className="h-4 w-4" />
