@@ -109,7 +109,6 @@ export function AnalyticsTab({ profileId, links }: AnalyticsTabProps) {
         return result.data;
       }
     },
-    enabled: !!profileId,
     refetchInterval: 10000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,

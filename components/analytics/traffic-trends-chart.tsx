@@ -20,7 +20,7 @@ interface TrafficTrendsChartProps {
 export function TrafficTrendsChart({ data, isLoading = false, showMultipleLines = false }: TrafficTrendsChartProps) {
   if (isLoading) {
     return (
-      <Card className="rounded-none">
+      <Card>
         <CardHeader>
           <CardTitle>Traffic Trends</CardTitle>
           {showMultipleLines && <p className="text-sm text-muted-foreground">Daily traffic data</p>}
