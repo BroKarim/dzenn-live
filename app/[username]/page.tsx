@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
 
   return {
-    title: `@${username} | OneLink`,
-    description: `Visit ${username}'s profile on OneLink`,
+    title: `@${username} | dzenn`,
+    description: `Visit ${username}'s profile on dzenn`,
   };
 }
 
