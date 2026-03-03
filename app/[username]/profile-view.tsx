@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { PreviewBackground, PreviewProfile, PreviewSocials, PreviewLinks } from "@/components/preview";
-import LinkClickTracker from "./link-click-tracker";
+import { sendTrackingBeacon } from "./link-click-tracker";
 import { ProfileHeaderButtons } from "./profile-header-buttons";
 import { getThemeById } from "@/lib/themes";
 
@@ -52,11 +52,11 @@ export function ProfileView({ user: profile }: { user: any }) {
           <PreviewSocials profile={profile} />
           <PreviewLinks
             profile={profile}
-            renderLink={(link, card) => (
-              <LinkClickTracker key={link.id} linkId={link.id}>
-                {card}
-              </LinkClickTracker>
-            )}
+            renderLink={(link, card) =>
+              React.cloneElement(card as React.ReactElement<any>, {
+                onBeforeNavigate: () => sendTrackingBeacon(link.id),
+              })
+            }
           />
         </div>
       </div>

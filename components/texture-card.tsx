@@ -22,9 +22,11 @@ interface TexturedCardProps extends Partial<LinkItem> {
   texture?: CardTexture;
   titleColor?: string;
   className?: string;
+  /** Called immediately when the card is clicked, before navigation or expand. Use for analytics tracking. */
+  onBeforeNavigate?: () => void;
 }
 
-export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl, isStripeEnabled, backgroundColor = "bg-zinc-800", titleColor = "text-white", texture = "base", className = "" }: TexturedCardProps) {
+export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl, isStripeEnabled, backgroundColor = "bg-zinc-800", titleColor = "text-white", texture = "base", className = "", onBeforeNavigate }: TexturedCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasExtraContent = !!(description || imageUrl || videoUrl || isStripeEnabled);
 
@@ -123,6 +125,7 @@ export function TexturedCard({ title, description, url, icon, imageUrl, videoUrl
   );
 
   const handleClick = () => {
+    onBeforeNavigate?.();
     if (hasExtraContent) {
       setIsExpanded(!isExpanded);
     } else {

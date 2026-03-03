@@ -42,7 +42,7 @@ function shouldTrack(): boolean {
  * sendBeacon() is guaranteed to be delivered even when the user immediately
  * navigates away or closes the tab. fetch() would be cancelled in that case.
  */
-function sendTrackingBeacon(linkId: string): void {
+export function sendTrackingBeacon(linkId: string): void {
   if (!shouldTrack() || hasRecentClick(linkId)) return;
 
   const clientId = getOrCreateClientId();
@@ -71,10 +71,11 @@ export default function LinkClickTracker({ children, linkId }: { children: React
     sendTrackingBeacon(linkId);
   }, [linkId]);
 
-  // `contents` makes the wrapper div invisible in layout flow so the
-  // parent's space-y-4 gap applies correctly between cards.
+  // role="presentation" tells a11y this is a non-interactive wrapper div —
+  // keyboard events are handled by TexturedCard (the actual interactive child).
+  // sendBeacon fires on click which naturally bubbles up from the card.
   return (
-    <div onClick={handleClick}>
+    <div onClick={handleClick} role="presentation">
       {children}
     </div>
   );
