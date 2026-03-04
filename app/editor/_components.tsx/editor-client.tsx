@@ -60,15 +60,28 @@ export default function EditorClient({ initialProfile }: EditorClientProps) {
   return (
     <main className="min-h-screen flex h-screen flex-col bg-background">
       <NavigationGuard />
-      <EditorHeader profile={currentProfile} />
 
-      <div className="flex flex-1 gap-6 overflow-hidden p-6" style={{ zoom: 0.9 }}>
-        <Preview profile={currentProfile} viewMode={viewMode} />
-
-        <ControlPanel profile={currentProfile} onUpdate={updateDraft} />
+      {/* Mobile: show header + "go to desktop" message, hide everything else */}
+      <div className="flex md:hidden flex-col h-screen">
+        <EditorHeader profile={currentProfile} />
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
+          <p className="font-bold text-base leading-snug">Go to desktop.</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">I didn&apos;t have time for mobile responsiveness, I have a life.</p>
+        </div>
       </div>
 
-      <EditorDock viewMode={viewMode} setViewMode={setViewMode} />
+      {/* Desktop: full editor layout */}
+      <div className="hidden md:flex flex-col flex-1 h-screen">
+        <EditorHeader profile={currentProfile} />
+
+        <div className="flex flex-1 gap-6 overflow-hidden p-6" style={{ zoom: 0.9 }}>
+          <Preview profile={currentProfile} viewMode={viewMode} />
+
+          <ControlPanel profile={currentProfile} onUpdate={updateDraft} />
+        </div>
+
+        <EditorDock viewMode={viewMode} setViewMode={setViewMode} />
+      </div>
 
       <UnsavedChangesDialog open={showUnsavedDialog} onRestore={handleRestoreDraft} onDiscard={handleDiscardDraft} />
     </main>

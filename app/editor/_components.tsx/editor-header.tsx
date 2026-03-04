@@ -178,37 +178,44 @@ export default function EditorHeader({ profile }: EditorHeaderProps) {
   };
 
   return (
-    <header className="bg-background/95 sticky top-0 z-50 px-6 py-3 border-b">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center justify-center gap-4">
-          <Link href="/" className="w-10 h-10 flex items-center justify-center rounded-full bg-[#222] border-none text-white font-bold text-sm transition-all hover:scale-105 active:scale-95 shrink-0 shadow-dzenn">
+    <header className="bg-background/95 sticky top-0 z-50 px-4 md:px-6 py-3 border-b">
+      <div className="flex items-center justify-between gap-2">
+        {/* Left: Logo + DomainView */}
+        <div className="flex items-center gap-3 min-w-0">
+          <Link href="/" className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-[#222] border-none text-white font-bold text-sm transition-all hover:scale-105 active:scale-95 shrink-0 shadow-dzenn">
             Dz
           </Link>
-          <DomainView
-            placeholder={fullUrl}
-            value={fullUrl}
-            buttonCopy={{
-              idle: "Copy",
-              success: "Copied!",
-            }}
-          />
+          {/* DomainView hidden on mobile */}
+          <div className="hidden sm:block min-w-0">
+            <DomainView
+              placeholder={fullUrl}
+              value={fullUrl}
+              buttonCopy={{
+                idle: "Copy",
+                success: "Copied!",
+              }}
+            />
+          </div>
         </div>
 
-        {/* Center: Save & Discard Buttons */}
-        <div className="flex items-center gap-3">
+        {/* Right: Save & Discard Buttons */}
+        <div className="flex items-center gap-2 shrink-0">
           {isDirty && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mr-1">Unsaved</span>
+            <div className="flex items-center gap-1.5">
+              {/* "Unsaved" label hidden on very small screens */}
+              <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Unsaved</span>
+              {/* Discard: icon-only on mobile, with text on sm+ */}
               <Button onClick={handleDiscard} disabled={isPending} size="sm" variant="ghost" className="h-8 gap-1.5 text-xs hover:bg-destructive/10 hover:text-destructive transition-colors px-2">
                 <RotateCcw className="h-3.5 w-3.5" />
-                Discard
+                <span className="hidden sm:inline">Discard</span>
               </Button>
             </div>
           )}
 
-          <Button onClick={handleSave} disabled={!isDirty || isPending} size="sm" variant={isDirty ? "default" : "outline"} className="h-9 gap-2 shadow-sm relative overflow-hidden">
+          <Button onClick={handleSave} disabled={!isDirty || isPending} size="sm" variant={isDirty ? "default" : "outline"} className="h-9 gap-2 shadow-sm relative overflow-hidden px-3">
             {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            <span className="font-semibold text-xs lowercase">{isPending ? "Saving..." : "Save Changes"}</span>
+            {/* "Save Changes" text hidden on very small screens */}
+            <span className="hidden xs:inline font-semibold text-xs lowercase">{isPending ? "Saving..." : "Save Changes"}</span>
             {isDirty && !isPending && (
               <span className="absolute right-0 top-0 flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-foreground opacity-75"></span>
