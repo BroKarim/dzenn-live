@@ -76,7 +76,7 @@ jobs:
               --restart unless-stopped \
               --network dzenn_default \
               -p 3000:3000 \
-              --env-file /root/dzenn/.env \
+              --env-file /home/ubuntu/dzenn/.env \
               $IMAGE_TAG
 
             # Cleanup

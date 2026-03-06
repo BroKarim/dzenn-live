@@ -53,7 +53,7 @@ export function Hero() {
           {/* Title and Input - Top Left */}
           <div className="max-w-xl order-1">
             <h1 className="tracking-tight text-balance text-white drop-shadow-2xl font-serif font-thin lg:text-8xl md:text-8xl text-7xl">
-              Nonchalant
+              Nonchalantt
               <br />
               Link in Bio
             </h1>
