@@ -68,15 +68,15 @@ jobs:
             docker pull $IMAGE_TAG || { echo "❌ Pull failed, aborting deploy"; exit 1; }
 
             # Baru stop dan replace container lama
-            docker stop dzenn-app || true
-            docker rm dzenn-app || true
+            docker stop dzenn-live || true
+            docker rm dzenn-live || true
 
             docker run -d \
-              --name dzenn-app \
+              --name dzenn-live \
               --restart unless-stopped \
               --network dzenn_default \
-              -p 3000:3000 \
-              --env-file /home/ubuntu/dzenn/.env \
+              -p 3001:3000 \
+              --env-file /var/www/dzenn/.env \
               $IMAGE_TAG
 
             # Cleanup
