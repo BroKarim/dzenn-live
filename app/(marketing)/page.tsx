@@ -4,6 +4,7 @@
 import type { SVGProps } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { instrumentSerif } from "@/lib/fonts";
 
 const BACKGROUND_STYLE = {
   backgroundImage: "url('https://images.unsplash.com/photo-1597200381847-30ec200eeb9a?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
@@ -85,10 +86,7 @@ export default function MarketingPage() {
                 <Badge className="mb-2 bg-purple-100 text-purple-700 hover:bg-purple-100 border-0 px-4 py-1 text-sm font-medium rounded-full">Currently in Beta</Badge>
 
                 {/* Headline */}
-                <h1
-                  className="text-4xl sm:text-6xl md:text-5xl font-serif font-normal text-gray-900 leading-tight mb-2 max-w-2xl"
-                  style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
-                >
+                <h1 className={`text-4xl sm:text-6xl md:text-5xl font-normal text-gray-900 leading-tight mb-2 max-w-2xl ${instrumentSerif.className}`}>
                   Open Source
                   <br />
                   Link in bio
